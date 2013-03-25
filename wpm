@@ -1,0 +1,137 @@
+#!/bin/bash
+
+current_dir="$(dirname $0)"
+
+error(){
+    message="$1"
+    if test -z "$message"; then
+        echo "!!! เกิดข้อผิดพลาด"
+    else
+        echo "!!! $message"
+    fi
+    exit
+}
+
+end(){
+    echo "$>> $1เรียบร้อย"
+}
+
+run(){
+    scriptname="$1"
+    shift
+    (! test -e "${current_dir}/script/$scriptname") && error "ชื่อสคริปต์ไม่ถูกต้อง"
+    bot="$(ls ${current_dir}/script/$scriptname/'$'* | grep -o -P '(?<=/\$).*')"
+    if test -z "$bot"; then
+        echo "!!! ไม่มีข้อมูลบอต"
+        exit
+    fi
+    echo "ดำเนินการโดย $bot"
+    cd bots/"$bot"
+    ./../../script/"$scriptname/$scriptname" "$@"
+}
+
+createuser(){
+    botname="$1"
+    (test -z "$botname") && error "โปรดระบุชื่อบอต"
+    cd pywikipedia
+    python generate_user_files.py
+    cd ../bots
+    mkdir "$botname"
+    cd "$botname"
+    ln -s ../../pywikipedia/families
+    ln -s ../../pywikipedia/userinterfaces
+    mv ../../pywikipedia/user-config.py .
+    python ../../pywikipedia/login.py
+}
+
+clearlog(){
+    file="$current_dir"/config/data.cfg
+    basepath="$(grep -o -P "(?<=PYWIKI: ).*" $file)"
+    mkdir "${basepath}/logs/new"
+    mv "${basepath}/logs"/*.log "${basepath}/logs/new/"
+    mv "${basepath}/logs/old/" "${basepath}/logs/new/"
+    mv "${basepath}/logs/new/" "${basepath}/logs/old"
+}
+
+new(){
+    scriptname="$1"
+    bot="$2"
+    (test -z "$scriptname" || test -z $bot) && error "กรอกพารามิเตอร์ไม่สมบูรณ์"
+    cd script
+    mkdir "$scriptname"
+    cd "$scriptname"
+    cp ../../templates/script "$scriptname"
+    touch '$'"$bot"
+}
+
+testscript(){
+    cd bots
+    for i in *; do
+        cd $i
+        python ./../../pywikipedia/replace.py -page:User:"$i"/ts -regex "(?s)^(.*)$" "$RANDOM" -summary:ทดสอบ -always
+        cd ..
+    done
+}
+
+remove(){
+    command="$1"
+    shift
+    case "$command" in
+    "lock")
+        rm /tmp/*.wp.lock
+        echo "$>> ปลดล็อกแล้ว"
+        ;;
+    "pyc")
+        find "${current_dir}" -type f | grep -P "\.pyc$" | xargs rm
+        find "${current_dir}" -type f | grep -P "\.pyo$" | xargs rm
+        echo "$>> ลบไฟล์ pyc เรียบร้อย"
+        ;;
+    "git")
+        git ls-files -z --deleted | while read -r -d '' file; do
+            git rm "$file"
+        done
+        echo "$>> ลบไฟล์ git เรียบร้อย"
+        ;;
+    "delay")
+        find ./bots -type f | grep "throttle.ctrl" | xargs rm
+        echo "$>> ล้างไฟล์หน่วงแล้ว"
+        ;;
+    *)
+        error "เรียกใช้พารามิเตอร์ไม่ถูกต้อง"
+        ;;
+    esac
+}
+
+doc(){
+    cd bots/UnnamedBot
+    ls
+    pydoc "./../../$1"
+}
+
+cd "$current_dir"
+mode="$1"
+shift
+case "$mode" in
+"setup")
+    svn checkout http://svn.wikimedia.org/svnroot/pywikipedia/trunk/pywikipedia/ pywikipedia
+    end "ติดตั้ง"
+    ;;
+"run" | "r")
+    run "$@"
+    end "รันสคริปต์"
+    ;;
+"rm")
+    remove "$@"
+    ;;
+"update")
+    cd pywikipedia && svn update
+    end "ปรับปรุงเรียบร้อย"
+    ;;
+"packlog")
+    clearlog
+    end "เก็บปูม"
+    ;;
+*)
+    error "เรียกใช้พารามิเตอร์ไม่ถูกต้อง"
+    ;;
+esac

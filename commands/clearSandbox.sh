@@ -6,4 +6,4 @@
 #$ -e $HOME/clearSandbox.log
 #$ -N clearSandbox
 
-/usr/bin/python $HOME/rewrite/pwb.py $HOME/wprobot/script/clearSandbox.py -dir:$HOME/wprobot/bots/Nullzerobot
+/usr/bin/python $HOME/wprobot/scripts/clearSandbox.py -bot:Nullzerobot
