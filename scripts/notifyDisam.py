@@ -11,10 +11,13 @@ import difflib
 import wp
 from wp import ltime, lgenerator, lapi, lre
 import pywikibot
+from pywikibot.data import api
 
 def glob():
-    global container
+    global container, token, pagereport
     container = {}
+    pagereport = pywikibot.Page(site, conf.refuselist)
+    token = None
 
 def dict2str(d):
     s = u""
@@ -28,20 +31,12 @@ def notify(user, dic, insertDisamT):
     userobj = pywikibot.User(site, user)
     usertalk  = userobj.getUserTalkPage()
     
-    if not userobj.isRegistered():
-        return
-    if 'bot' in userobj.groups():
-        return
-    if not usertalk.exists():
-        return
+    refuse = False
         
     try:
         textusertalk = usertalk.get()
     except pywikibot.isRedirectPage:
-        return
-        
-    if conf.nonotify in textusertalk:
-        return
+        refuse = True
     
     for title, linkset in dic.items():
         pagenow = pywikibot.Page(site, title)
@@ -58,6 +53,14 @@ def notify(user, dic, insertDisamT):
         return
     
     scontent = dict2str(dic)
+    
+    if ((not userobj.isRegistered()) or ('bot' in userobj.groups()) or 
+                                        (not usertalk.exists()) or
+                                        (conf.nonotifycat in textusertalk) or
+                                        (refuse)):
+        savereport("\n\n" + scontent)
+        return
+    
     message = insertDisamT
     message = message.replace(conf.linkPlaceholder, scontent)
     message = message.replace(conf.userPlaceholder, user)
@@ -85,9 +88,26 @@ def save(user, title, links):
         container[user][title] = links
     
 def flush():
+    global token, container
+    token = site.token(pagereport, "edit")
     insertDisamT = pywikibot.Page(site, conf.messageTemplate).get()
     for user in container:
         notify(user, container[user], insertDisamT)
+    container = {}
+
+def savereport(s):
+    global token
+    if not token:
+        token = site.token(pagereport, "edit")
+    r = api.Request(site=site,
+                action="edit",
+                title=conf.refuselist,
+                appendtext=s,
+                summary=conf.summary,
+                minor=1,
+                bot=1,
+                token=token)
+    r.submit()
 
 def check(revision):
     title = revision["title"]
@@ -125,8 +145,6 @@ def check(revision):
         save(revision["user"], title, set(disamlinks))
     
 def main():
-    global container
-    
     def receive_signal(signum, stack):
         pywikibot.output("Flush immediately!")
         flush()
@@ -143,7 +161,6 @@ def main():
             check(rev)
             if todaynum != ltime.date.today().day:
                 flush()
-                container = {}
                 todaynum = ltime.date.today().day
         except:
             wp.error()

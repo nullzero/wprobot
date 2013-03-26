@@ -6,6 +6,7 @@ Connect to API
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
+import init
 import pywikibot
 from pywikibot.data import api
 from wp import lre
