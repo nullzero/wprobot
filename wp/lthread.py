@@ -76,11 +76,10 @@ class LockObject(object):
         
     def do(self, s):
         while self.lock:
-            print "Can't do!"
             time.sleep(2)
             
         self.lock = True
-        print "lock acquired"
+        pywikibot.output("lock acquired")
         self.func(s)
         self.lock = False
-        print "lock released"
+        pywikibot.output("lock released")

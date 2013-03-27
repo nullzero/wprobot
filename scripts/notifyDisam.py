@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 """Notify user that link a link to disambiguous page."""
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 __author__ = "Sorawee Porncharoenwase"
 
 import signal
 import init
 import difflib
 import wp
-from wp import ltime, lgenerator, lapi, lre
 import pywikibot
+from wp import ltime, lgenerator, lapi, lre
 from pywikibot.data import api
 
 def glob():
@@ -35,7 +35,7 @@ def notify(user, dic, insertDisamT):
         
     try:
         textusertalk = usertalk.get()
-    except pywikibot.isRedirectPage:
+    except pywikibot.IsRedirectPage:
         refuse = True
     
     for title, linkset in dic.items():
@@ -58,7 +58,8 @@ def notify(user, dic, insertDisamT):
                                         (not usertalk.exists()) or
                                         (conf.nonotifycat in textusertalk) or
                                         (refuse)):
-        savereport("\n\n" + scontent)
+        pywikibot.output("save report instead!")
+        notifyreport("\n\n" + scontent)
         return
     
     message = insertDisamT
@@ -72,7 +73,7 @@ def notify(user, dic, insertDisamT):
                     conf.summary, minorEdit=False, async=True)
     except:
         wp.error()
-    
+        
     pywikibot.output(u">>> done!")
 
 def save(user, title, links):
@@ -88,26 +89,21 @@ def save(user, title, links):
         container[user][title] = links
     
 def flush():
+    pywikibot.output("begin flushing")
     global token, container
     token = site.token(pagereport, "edit")
     insertDisamT = pywikibot.Page(site, conf.messageTemplate).get()
     for user in container:
         notify(user, container[user], insertDisamT)
     container = {}
+    pywikibot.output("end flushing")
 
-def savereport(s):
-    global token
+def notifyreport(s):
+    pywikibot.output("save report function!")
     if not token:
+        global token
         token = site.token(pagereport, "edit")
-    r = api.Request(site=site,
-                action="edit",
-                title=conf.refuselist,
-                appendtext=s,
-                summary=conf.summary,
-                minor=1,
-                bot=1,
-                token=token)
-    r.submit()
+    lapi.append(pagereport, s, conf.summary, token=token)
 
 def check(revision):
     title = revision["title"]
@@ -149,16 +145,18 @@ def main():
         pywikibot.output("Flush immediately!")
         flush()
     
-    signal.signal(signal.SIGUSR1, receive_signal)
+    signal.signal(signal.SIGUSR2, receive_signal)
         
     todaynum = ltime.date.today().day
     for rev in lgenerator.recentchanges(site,
                                         showRedirects=False,
                                         showBot=False,
-                                        namespaces=range(0, 16, 2).remove(2),
+                                        namespaces=conf.namespaces,
                                         repeat=True):
         try:
             check(rev)
+            pywikibot.output(unicode(todaynum) + u" and " +
+                             unicode(ltime.date.today().day))
             if todaynum != ltime.date.today().day:
                 flush()
                 todaynum = ltime.date.today().day

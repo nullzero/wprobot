@@ -8,6 +8,7 @@ __author__ = "Sorawee Porncharoenwase"
 
 import init
 import pywikibot
+import wp
 from pywikibot.data import api
 from wp import lre
 
@@ -31,3 +32,25 @@ def extractLinkedPages(site, text, title=None, expand=False):
     
     return [pywikibot.Page(site, item['*'])
             for item in r.submit()['parse']['links']]
+
+def append(page, text, comment=u'', minorEdit=True, botflag=True,
+           async=False, token=None):
+    # TODO: async support
+    if token is None:
+        token = page.site.token(page, "edit")
+    r = api.Request(site=page.site,
+                    action="edit",
+                    title=page.title(),
+                    appendtext=text,
+                    summary=comment,
+                    token=token)
+                    
+    if minorEdit:
+        r["minor"] = ""
+    if botflag:
+        r["bot"] = ""
+    
+    try:
+        r.submit()
+    except:
+        wp.error()
