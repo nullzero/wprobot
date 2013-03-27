@@ -1,5 +1,5 @@
-bots
+bots/*
 *.pyc
 *.pyo
-tmp
+tmp/*
 scripts/test.py

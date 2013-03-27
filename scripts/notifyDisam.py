@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Notify user that link a link to disambiguous page."""
 
@@ -54,12 +53,12 @@ def notify(user, dic, insertDisamT):
     
     scontent = dict2str(dic)
     
-    if ((not userobj.isRegistered()) or ('bot' in userobj.groups()) or 
+    if ((not userobj.isRegistered()) or ("bot" in userobj.groups()) or 
                                         (not usertalk.exists()) or
                                         (conf.nonotifycat in textusertalk) or
                                         (refuse)):
         pywikibot.output("save report instead!")
-        notifyreport("\n\n" + scontent)
+        notifyreport(u"\n\n" + scontent)
         return
     
     message = insertDisamT
@@ -74,7 +73,7 @@ def notify(user, dic, insertDisamT):
     except:
         wp.error()
         
-    pywikibot.output(u">>> done!")
+    pywikibot.output(">>> done!")
 
 def save(user, title, links):
     pywikibot.output(u">>> save %s %s" % (user, title))
@@ -150,22 +149,28 @@ def main():
     todaynum = ltime.date.today().day
     for rev in lgenerator.recentchanges(site,
                                         showRedirects=False,
+                                        changetype=["edit", "new"],
                                         showBot=False,
                                         namespaces=conf.namespaces,
                                         repeat=True):
         try:
             check(rev)
-            pywikibot.output(unicode(todaynum) + u" and " +
-                             unicode(ltime.date.today().day))
-            if todaynum != ltime.date.today().day:
-                flush()
-                todaynum = ltime.date.today().day
         except:
             wp.error()
+        
+        pywikibot.output(unicode(todaynum) + " and " +
+                         unicode(ltime.date.today().day))
+                         
+        if todaynum != ltime.date.today().day:
+            try:
+                flush()
+            except:
+                wp.error()
+            todaynum = ltime.date.today().day
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(u"notify linking to disambigous page",
-                                    lock=True)
+    args, site, conf = wp.pre("notify linking to disambigous page",
+                              lock=True)
     try:
         glob()
         main()

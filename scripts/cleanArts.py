@@ -23,7 +23,7 @@ def main():
             page = pywikibot.Page(site, page)
             page.put(lcleaner.clean(page.get()), conf.summary)
         else:
-            print lcleaner.clean(arg)
+            pywikibot.output(lcleaner.clean(arg))
 
 if __name__ == "__main__":
     args, site, conf = wp.pre(u"clean articles")
