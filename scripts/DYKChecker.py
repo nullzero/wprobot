@@ -16,14 +16,18 @@ def main():
     page = wp.Page(wp.toutf(raw_input()))
     dic = {}
     
-    try:
-        text = page.get()
-    except pywikibot.NoPage:
-        dic["error"] = "page not exist"
-    except pywikibot.IsRedirectPage:
-        page = page.getRedirectTarget()
-    except:
-        dic["error"] = "unknown error"
+    while True:
+        try:
+            text = page.get()
+            break
+        except pywikibot.NoPage:
+            dic["error"] = "page not exist"
+            break
+        except pywikibot.IsRedirectPage:
+            page = page.getRedirectTarget()
+        except:
+            dic["error"] = "unknown error"
+            break
         
     if "error" not in dic:
         dic["len"] = len(text)
