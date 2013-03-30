@@ -3,23 +3,24 @@
 def init():
     import sys
     
-    def simplifypath(path):
+    def simplifypath(*path):
         return os.path.abspath(
                 os.path.expanduser(os.path.join(*path)))
     
     for ind, arg in enumerate(sys.argv):
         if arg.startswith("-bot:"):
-            botName = arg[len("-bot:"):]
+            os.environ["WPROBOT_BOT"] = arg[len("-bot:"):]
             sys.argv.pop(ind)
             break
             
-    dirbot = simplifypath([os.environ["WPROBOT_DIR"], "bots", botName])
+    dirbot = simplifypath(os.environ["WPROBOT_DIR"], "bots", 
+                          os.environ["WPROBOT_BOT"])
     sys.argv.append("-dir:" + dirbot)
     
-    sys.path.append(simplifypath([os.environ["WPROBOT_DIR"]]))
+    sys.path.append(simplifypath(os.environ["WPROBOT_DIR"]))
             
     import conf.conf
-    sys.path.append(simplifypath([conf.conf.pywikibotDir]))
+    sys.path.append(simplifypath(conf.conf.pywikibotDir))
     
     import wp.patch
     

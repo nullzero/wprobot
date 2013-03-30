@@ -4,34 +4,38 @@
 import init
 import wp
 import pywikibot
-from wp import lre, ldata, lapi
+from wp import lre, ldata
 
 def glob():
-    pbot = lre.lre(u"(?i)^(.*(บอต|bot)|(บอต|bot).*)$")
+    pass
 
 def isbot(data):
-    if "bot" in data["groups"]: return True
-    if data["name"] == u"New user message": return True
-    return pbot.search(data["name"]) is not None
+    return (("bot" in data["groups"]) or 
+            any([pati.search(data["name"]) for pati in conf.patbot]))
 
 def dowrite(path, data):
-    puttext = u"ปรับปรุงล่าสุด %s\n\n{{/begin|500}}\n" % wp.getTime()
-    ptext = u""
+    pretext = u"ปรับปรุงล่าสุด %s\n\n{{/begin|500}}\n" % wp.getTime()
+    entry = []
     cnt = 1
     
     for i in data:
-        ptext += (u"|-\n| %d || [[User:%s|%s]]" % (cnt, i["name"], i["name"]) +
-            u" %s %s || " % ("(Admin)" if ("sysop" in i["groups"]) else "",
-                            "(Bot)" if ("bot" in i["groups"]) else "") + 
-            u"[[Special:Contributions/%s|%s]]\n" % (i["name"], i["editcount"]))
+        entry.append(u"|-\n| %(cnt)d || [[User:%(name)s|%(name)s]]"
+                     u" %(sys)s %(bot)s || [[Special:Contributions/%(name)s"
+                     u"|%(edit)s]]\n" % {
+                        "cnt":  cnt,
+                        "name": i["name"],
+                        "sys":  "(Admin)" if ("sysop" in i["groups"]) else "",
+                        "bot":  "(Bot)" if ("bot" in i["groups"]) else "",
+                        "edit": i["editcount"],
+                    })
         cnt += 1
     
     page = pywikibot.Page(site, path)
     gettext = page.get()
     
-    pre, post = gettext.split(u"{{/end}}")
+    dummy, posttext = gettext.split(u"{{/end}}")
     
-    page.put(ptext + u"{{/end}}" + post, u"ปรับปรุงรายการ")
+    page.put(pretext + u"".join(entry) + u"{{/end}}" + posttext, conf.summary)
     pywikibot.output(u"done!")
     
 def main():
@@ -42,18 +46,16 @@ def main():
     for user in site.allusers():
         if cntuser % conf.maxnum == 0:
             pywikibot.output(u"processing (%d): %s" % (cntuser / conf.maxnum,
-                                                       user["name"])
+                                                       user["name"]))
         includelist.append(user)
         if not isbot(user):
             excludelist.append(user)
+        cntuser += 1
             
-    """
     dowrite(conf.path + conf.botsuffix, includelist.get()[:conf.allentries])
     dowrite(conf.path, excludelist.get()[:conf.allentries])
-    """
 
 if __name__ == "__main__":
-    raise NotImplementedError
     args, site, conf = wp.pre("update top users who edit most",
                               lock=True)
     try:

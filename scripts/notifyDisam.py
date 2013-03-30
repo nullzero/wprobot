@@ -15,7 +15,7 @@ from pywikibot.data import api
 def glob():
     global container, token, pagereport
     container = {}
-    pagereport = pywikibot.Page(site, conf.refuselist)
+    pagereport = wp.Page(conf.refuselist)
     token = None
 
 def dict2str(d):
@@ -29,16 +29,18 @@ def notify(user, dic, insertDisamT):
     pywikibot.output(u"notifying %s..." % user)
     userobj = pywikibot.User(site, user)
     usertalk  = userobj.getUserTalkPage()
-    
+    pywikibot.output("get talk page now")
     refuse = False
         
     try:
         textusertalk = usertalk.get()
-    except pywikibot.IsRedirectPage:
+    except (pywikibot.NoPage, pywikibot.IsRedirectPage):
+        pywikibot.output("no page or is redirect page... refuse to proceed")
         refuse = True
-    
+        
+    pywikibot.output("get content of talk page now")
     for title, linkset in dic.items():
-        pagenow = pywikibot.Page(site, title)
+        pagenow = wp.Page(title)
         if pagenow.exists():
             alllinks = [link.title() for link in pagenow.linkedPages()]
             dic[title] = filter(lambda link: link in alllinks, list(linkset))
@@ -51,12 +53,15 @@ def notify(user, dic, insertDisamT):
     if not dic:
         return
     
+    pywikibot.output("clear dict now")
+    
     scontent = dict2str(dic)
     
-    if ((not userobj.isRegistered()) or ("bot" in userobj.groups()) or 
-                                        (not usertalk.exists()) or
-                                        (conf.nonotifycat in textusertalk) or
-                                        (refuse)):
+    pywikibot.output("transform dict now")
+    
+    if ((not userobj.isRegistered()) or (refuse) or
+                                        ("bot" in userobj.groups()) or
+                                        (conf.nonotifycat in textusertalk)):
         pywikibot.output("save report instead!")
         notifyreport(u"\n\n" + scontent)
         return
@@ -91,9 +96,12 @@ def flush():
     pywikibot.output("begin flushing")
     global token, container
     token = site.token(pagereport, "edit")
-    insertDisamT = pywikibot.Page(site, conf.messageTemplate).get()
+    insertDisamT = wp.Page(conf.messageTemplate).get()
     for user in container:
-        notify(user, container[user], insertDisamT)
+        try:
+            notify(user, container[user], insertDisamT)
+        except:
+            wp.error()
     container = {}
     pywikibot.output("end flushing")
 
@@ -109,21 +117,21 @@ def check(revision):
     pywikibot.output(u"check page %s @ %s" % (title, wp.getTime()))
     revid = revision["revid"]
     oldrevid = revision["old_revid"]
-    page = pywikibot.Page(site, title)
+    page = wp.Page(title)
     textnew = page.getOldVersion(revid)
     textold = u"" if oldrevid == 0 else page.getOldVersion(oldrevid)
     
     if site.getRedirectText(textnew):
         return
     if site.getRedirectText(textold):
-        textold = u""
+        textold = ""
     
     addedlinks = (set(lapi.extractLinkedPages(site, textnew, title)) -
                 set(lapi.extractLinkedPages(site, textold, title)))
     disamlinks = []
     
     for link in addedlinks:
-        if u":" in link.title():
+        if ":" in link.title():
             continue
         if link.title().startswith(u"#"):
             continue
@@ -136,7 +144,7 @@ def check(revision):
         except:
             wp.error()
     
-    if len(disamlinks) != 0:
+    if disamlinks:
         save(revision["user"], title, set(disamlinks))
     
 def main():
@@ -158,8 +166,8 @@ def main():
         except:
             wp.error()
         
-        pywikibot.output(unicode(todaynum) + " and " +
-                         unicode(ltime.date.today().day))
+        pywikibot.output(wp.toutf(todaynum) + u" and " +
+                         wp.toutf(ltime.date.today().day))
                          
         if todaynum != ltime.date.today().day:
             try:

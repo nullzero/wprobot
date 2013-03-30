@@ -17,11 +17,15 @@ import imp
 import pywikibot
 from conf import glob as conf
 
+def onload():
+    conf.botname = os.environ["WPROBOT_BOT"]
+
 def glob():
-    global basescript, fullname, lockfile
+    global basescript, fullname, lockfile, site
     basescript = os.path.basename(sys.argv[0])
     fullname = None
     lockfile = None
+    site = None
 
 def tostr(st):
     """Return normal quoted string."""
@@ -65,6 +69,7 @@ def pre(name, lock=False):
     This function also handles default arguments, generates lockfile
     and halt the script if lockfile exists before.
     """
+    global site
     args = pywikibot.handleArgs() # must be called before getSite()
     site = pywikibot.getSite()
     sysop = False
@@ -114,9 +119,16 @@ def posterror():
     post(unlock = False)
 
 def handlearg(start, arg):
-    if arg.startswith(u"-" + start + u":"):
+    if arg.startswith("-" + start + ":"):
         return arg[2 + len(start):]
     else:
         return None
 
+def Page(title):
+    if not site:
+        global site
+        site = pywikibot.getSite()
+    return pywikibot.Page(site, title)
+
 glob()
+onload()

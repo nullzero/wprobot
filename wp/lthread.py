@@ -3,10 +3,10 @@
 __author__ = "Pywikipedia bot team"
 __license__ = "MIT"
 
-import init
 import datetime
 from Queue import Queue
 from threading import Thread
+import init
 import pywikibot
 
 class ThreadPool(object):
