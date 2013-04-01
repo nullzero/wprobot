@@ -43,9 +43,8 @@ def main():
         text = pywikibot.removeCategoryLinks(text)
         
         subst = lre.subst()
-        # delete all spaces
-        subst.append((r"\s+", " "))
-         # delete all external links
+        subst.append((r"[ \t]*", " "))
+        subst.append((r"\n*", "\n"))
         subst.append((r"(?s)(?<!\[)\[(?!\[).*?\]", ""))
         subst.append((r"[\[\]]", ""))
         
