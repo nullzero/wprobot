@@ -52,18 +52,17 @@ class subst(object):
         self._all = []
         
     def append(self, p):
-        self._all.append((lre(p[0]), p[1]))
+        self._all.append((lre(p[0]), p[1], p[2:]))
     
-    def do(self, s, rep=False):
+    def process(self, s):
         if not isinstance(s, basestring):
             s = s.group()
-        if rep:
-            func = lambda _x, _y: _x[0].subr(_x[1], _y)
-        else:
-            func = lambda _x, _y: _x[0].sub(_x[1], _y)
             
         for i in self._all:
-            s = func(i, s)
+            if "subr" in i[2]:
+                s = i[0].subr(i[1], s)
+            else:
+                s = i[0].sub(i[1], s)
         return s
 
 def find(pat, text, group=0):
@@ -104,6 +103,10 @@ def getconf(key, text):
 def findOverlap(pattern, text):
     """Find all patterns in given text overlappingly."""
     return sum([1 for x in finditer(u"(?=(" + pattern + u"))", text) if x])
+
+def rmsym(begin, end, text):
+    return subr("(?s)%s(?:(?!%s|%s).)*%s" % 
+            (begin, begin, end, end), "", text)
 
 """ More patterns! """
 pats = {

@@ -8,6 +8,7 @@ import json
 import init
 import wp
 import pywikibot
+from wp import lre
 
 def glob():
     pass
@@ -21,17 +22,40 @@ def main():
             text = page.get()
             break
         except pywikibot.NoPage:
-            dic["error"] = "page not exist"
+            dic["error"] = u"ไม่มีหน้าดังกล่าว"
             break
         except pywikibot.IsRedirectPage:
             page = page.getRedirectTarget()
         except:
-            dic["error"] = "unknown error"
+            dic["error"] = u"เกิดข้อผิดพลาดไม่ทราบสาเหตุ"
             break
-        
+    
+    oldtext = text
+    
     if "error" not in dic:
-        dic["len"] = len(text)
+        # delete all references
+        text, numinline = lre.subn(r"(?s)<ref.*?</ref>", "", text)
+        text = lre.rmsym(r"\{\{", r"\}\}", text)
+        text = lre.rmsym(r"\{\|", r"\|\}", text)
+        text = pywikibot.removeDisabledParts(text)
+        text = pywikibot.removeHTMLParts(text)
+        text = pywikibot.removeLanguageLinks(text)
+        text = pywikibot.removeCategoryLinks(text)
         
+        subst = lre.subst()
+        # delete all spaces
+        subst.append((r"\s+", " "))
+         # delete all external links
+        subst.append((r"(?s)(?<!\[)\[(?!\[).*?\]", ""))
+        subst.append((r"[\[\]]", ""))
+        
+        text = subst.process(text)
+        
+        dic["newtext"] = text
+        dic["len"] = {}
+        dic["len"]["value"] = len(text)
+        dic["len"]["result"] = "passed" if (dic["len"]["value"] >= 2000) else "failed"
+    
     print json.dumps(dic)
     
 if __name__ == "__main__":
