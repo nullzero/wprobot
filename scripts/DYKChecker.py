@@ -15,9 +15,9 @@ from wp import lre
 def glob():
     global anchorBegin, anchorEnd, subst, anchor
 
-    anchor = ur"[\U00030000-\U000dffff]"
-    anchorBegin = int("30000", 16)
-    anchorEnd = int("dffff", 16)
+    anchor = ur"[\uE000-\uF8FF]"
+    anchorBegin = int("E000", 16)
+    anchorEnd = int("F8FF", 16)
 
     subst = lre.subst()
 
