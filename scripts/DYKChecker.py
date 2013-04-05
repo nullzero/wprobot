@@ -43,10 +43,10 @@ def glob():
     subst.append(("\'{2,}", ""))
 
     # delete header
-    subst.append((r"(%(s)s)\=+.*?\=+ *(%(s)s)" % {"s": anchor}, r"\1\2"))
+    subst.append((ur"(?m)^(%(s)s)\=+.*?\=+ *(%(s)s)$" % {"s": anchor}, r"\1\2"))
 
     # delete list
-    subst.append((r"(%(s)s)[\:\*\#]*" % {"s": anchor}, r"\1"))
+    subst.append((ur"(?m)^(%(s)s)[\:\*\#]*" % {"s": anchor}, r"\1"))
 
 def showdiff(a, b):
     out = []
@@ -95,7 +95,6 @@ def main():
             try:
                 oldtext = page.get()
             except:
-
                 dic["error"] = u"เกิดข้อผิดพลาดไม่ทราบสาเหตุ"
             break
 

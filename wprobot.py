@@ -21,7 +21,7 @@ def init():
             
     import conf.conf
     sys.path.append(simplifypath(conf.conf.pywikibotDir))
-    
+    sys.path.append(simplifypath(conf.conf.pywikibotDir) + "/externals/httplib2")
     import wp.patch
     
     if __name__ == "__main__":
