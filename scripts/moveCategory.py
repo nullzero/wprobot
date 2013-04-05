@@ -54,16 +54,23 @@ def copyAndKeep(oldcat, catname):
     Returns true if copying was successful, false if target page already
     existed.
     """
-    targetCat = pywikibot.Page(oldcat.site(), catname, defaultNamespace=14)
+    targetCat = pywikibot.Page(oldcat.site, catname, ns=14)
     if targetCat.exists():
         pywikibot.output('Target page %s already exists!' % targetCat.title())
         return False
-        
-    pywikibot.output('Moving text from %s to %s.' % 
+
+    pywikibot.output('Moving text from %s to %s.' %
                     (oldcat.title(), targetCat.title()))
-                    
-    targetCat.put(oldcat.get(), u'โรบอต: ย้ายจาก %s. ผู้ร่วมเขียน: %s' % 
+
+    targetCat.put(oldcat.get(), u'โรบอต: ย้ายจาก %s. ผู้ร่วมเขียน: %s' %
                 (oldcat.title(), ', '.join(oldcat.contributingUsers())))
+
+    item = pywikibot.ItemPage.fromPage(oldcat)
+    if item.exists():
+        item.editEntity({'sitelinks': {site.dbName(): {'site': site.dbName(),
+                                                'title': targetCat.title()}},
+                         'labels': {site.code: {'language': site.code,
+                                                'value': targetCat.title()}}})
     return True
 
 
@@ -71,7 +78,7 @@ class CategoryMoveRobot:
     """Robot to move pages from one category to another."""
 
     def __init__(self, oldCatTitle, newCatTitle):
-        self.site = pywikibot.getSite()
+        self.site = site
         self.oldCat = pywikibot.Category(self.site, oldCatTitle)
         self.newCatTitle = newCatTitle
 
@@ -79,7 +86,7 @@ class CategoryMoveRobot:
         newCat = pywikibot.Category(self.site, self.newCatTitle)
         reason = i18n.twtranslate(self.site, 'category-was-moved') \
                      % {'newcat': self.newCatTitle, 'title': self.newCatTitle}
-        
+
         self.editSummary = i18n.twtranslate(site, 'category-changing') \
                                % {'oldcat':self.oldCat.title(),
                                   'newcat':newCat.title()}
@@ -102,20 +109,17 @@ class CategoryMoveRobot:
                     else:
                         if talkMoved:
                             oldMovedTalk = oldTalk
-        
+
         pool = lthread.ThreadPool(10)
-        
+
         def localchange(article, oldCat, newCat, comment):
-            if not article.change_category(oldCat, 
-                                    newCat, comment)
+            if ((not article.change_category(oldCat, newCat, comment)) and
+                     article.namespace in [10, 828]):
                 wp.Page(article.title() + "/doc").change_category(
                         oldCat, newCat, comment)
 
-        for article in itertools.chain(
-                       pagegenerators.CategorizedPageGenerator(
-                                      self.oldCat, recurse=False),
-                       pagegenerators.SubCategoriesPageGenerator(
-                                      self.oldCat, recurse=False)):
+        for article in itertools.chain(self.oldCat.articles(),
+                                       self.oldCat.subcategories()):
             pool.add_task(localchange, article, self.oldCat,
                         newCat, self.editSummary)
 
@@ -132,9 +136,9 @@ class CategoryMoveRobot:
 
 def glob():
     global patName, patEndTable, patTagDel
-    patName = re2.re2(ur"(?<=:)(?!.*:).*(?=\]\])")
-    patEndTable = re2.re2(ur"(?m)^\|\}")
-    patTagDel = re2.re2(ur"(?s)\{\{speedydelete.*?\}\}")
+    patName = lre.lre(ur"(?<=:)(?!.*:).*(?=\]\])")
+    patEndTable = lre.lre(ur"(?m)^\|\}")
+    patTagDel = lre.lre(ur"(?s)\{\{speedydelete.*?\}\}")
 
 def summaryWithTime():
     return conf.summary + u" @ " + wp.getTime()
@@ -145,40 +149,38 @@ def domove(source, dest):
     it will tag speedydelete tag and clear content to prevent
     interwikibot add interwiki link wrongly.
     """
-    pywikibot.output(u"Move from " + source + u" to " + dest)
     source = patName.find(source)
     dest = patName.find(dest)
+    pywikibot.output(u"Move from " + source + u" to " + dest)
     robot = CategoryMoveRobot(source, dest)
     robot.run()
-    pageCat = wp.Page(u"Category:" + source)
-    try:
+    pageCat = wp.Page(source)
+    if pageCat.exists():
         content = pageCat.get()
-    except pywikibot.NoPage:
-        return
-    res = patTagDel.find(content)
-    if res:
-        pageCat.put(u"{{bots|allow=" + wp.conf.botname + "}}\n" + res,
-                    conf.summary)
+        res = patTagDel.find(content)
+        if res:
+            pageCat.put(u"{{bots|allow=" + wp.conf.botname + "}}\n" + res,
+                        conf.summary)
 
 def verify(name):
     """Verify a username whether he is reliable."""
     user = pywikibot.User(site, name)
     return (user.isRegistered() and (user.editCount() >= conf.minEditCount) and
-            (not user.isBlocked()) and (int(time.strftime("%Y%m%d%H%M%S",
-            time.gmtime())) - int(user.registrationTime()) >= conf.minTime))
+           (not user.isBlocked()) and
+           (site.getcurrenttime() - user.registration()).days >= conf.minTime)
 
 def appendTable(title, arr):
     """Append data to a table."""
     if not arr:
         return
     page = wp.Page(title)
-    page.put(patEndTable.sub(u"\n".join(arr) + u"\n|}", page.get()),
+    page.put(patEndTable.sub("\n".join(arr) + "\n|}", page.get()),
              summaryWithTime())
 
 def main():
     """Main function"""
     if conf.pendingParam in args:
-        pywikibot.output(u"move pending entry")
+        pywikibot.output("move pending entry")
         title = conf.pageMinor
         operation = "minor"
     else:
@@ -188,7 +190,7 @@ def main():
     header, table, disable = lservice.service(page=wp.Page(title),
                                               confpage=wp.Page(conf.datwiki),
                                               operation=operation,
-                                              verifyFunc=verify,
+                                              verify=verify,
                                               summary=summaryWithTime)
 
     report = []
@@ -213,7 +215,9 @@ def main():
     appendTable(conf.pageMinor, pending)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(u"move category automatically", lock=True)
+    sites = [("wikidata", "wikidata")]
+    args, site, conf = wp.pre("move category service",
+                              lock=True, sites=sites)
     try:
         glob()
         main()

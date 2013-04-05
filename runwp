@@ -72,6 +72,11 @@ cd "$current_dir"
 mode="$1"
 shift
 case "$mode" in
+"r")
+    script="$1"
+    shift
+    python ./scripts/"$script" "$@" -bot:Nullzerobot
+    ;;
 "rm")
     remove "$@"
     ;;

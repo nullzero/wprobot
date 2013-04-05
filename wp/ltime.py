@@ -59,7 +59,7 @@ class date(datetime.date):
     """Date class"""
 
 def timestampdelta(ts, delta):
-    """Get timestamp and delta second. Return the result second."""
+    """Get timestamp and delta second. Return the result timestamp."""
     ts = str(ts)
     return datetime.datetime.fromtimestamp(time.mktime(
                     datetime.datetime(int(ts[0:4]),

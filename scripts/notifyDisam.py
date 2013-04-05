@@ -13,10 +13,9 @@ from wp import ltime, lgenerator, lapi, lre
 from pywikibot.data import api
 
 def glob():
-    global container, token, pagereport
+    global container, pagereport
     container = {}
     pagereport = wp.Page(conf.refuselist)
-    token = None
 
 def dict2str(d):
     s = u""
@@ -25,20 +24,7 @@ def dict2str(d):
         s += "".join(map(lambda x: u"* [[" + x + u"]]\n", d[title]))
     return s
 
-def notify(user, dic, insertDisamT):
-    pywikibot.output(u"notifying %s..." % user)
-    userobj = pywikibot.User(site, user)
-    usertalk  = userobj.getUserTalkPage()
-    pywikibot.output("get talk page now")
-    refuse = False
-        
-    try:
-        textusertalk = usertalk.get()
-    except (pywikibot.NoPage, pywikibot.IsRedirectPage):
-        pywikibot.output("no page or is redirect page... refuse to proceed")
-        refuse = True
-        
-    pywikibot.output("get content of talk page now")
+def notify(user, dic, insertDisamT, token):
     for title, linkset in dic.items():
         pagenow = wp.Page(title)
         if pagenow.exists():
@@ -46,38 +32,42 @@ def notify(user, dic, insertDisamT):
             dic[title] = filter(lambda link: link in alllinks, list(linkset))
         else:
             dic[title] = []
-            
+
         if not dic[title]:
             del dic[title]
-            
+
     if not dic:
         return
-    
-    pywikibot.output("clear dict now")
-    
-    scontent = dict2str(dic)
-    
-    pywikibot.output("transform dict now")
-    
-    if ((not userobj.isRegistered()) or (refuse) or
-                                        ("bot" in userobj.groups()) or
-                                        (conf.nonotifycat in textusertalk)):
-        pywikibot.output("save report instead!")
-        notifyreport(u"\n\n" + scontent)
+
+    pywikibot.output(u"notifying %s..." % user.title())
+    usertalk  = user.getUserTalkPage()
+
+    def checkrefuse(fun):
+        if not checkrefuse.val:
+            checkrefuse.val |= fun()
+
+    checkrefuse.val = False
+    checkrefuse(lambda: not user.isRegistered())
+    checkrefuse(lambda: not usertalk.exists())
+    checkrefuse(lambda: usertalk.isRedirectPage())
+    checkrefuse(lambda: "bot" in user.groups())
+    checkrefuse(lambda: conf.nonotifycat in usertalk.get())
+
+    if checkrefuse.val:
+        notifyreport(u"\n\n" + dict2str(dic), token)
         return
-    
-    message = insertDisamT
-    message = message.replace(conf.linkPlaceholder, scontent)
-    message = message.replace(conf.userPlaceholder, user)
-    message = message.replace(conf.datePlaceholder, "%d/%d" % 
-                        (ltime.date.today().day, ltime.date.today().month))
-    
+
+    message = (insertDisamT.replace(conf.linkPlaceholder, dict2str(dic))
+                           .replace(conf.userPlaceholder, user.title())
+                           .replace(conf.datePlaceholder, "%d/%d" %
+                           (ltime.date.today().day, ltime.date.today().month)))
+
     try:
-        usertalk.put(u"%s\n\n%s --~~~~" % (textusertalk, message),
+        usertalk.put(u"%s\n\n%s --~~~~" % (usertalk.get(), message),
                     conf.summary, minorEdit=False, async=True)
     except:
         wp.error()
-        
+
     pywikibot.output(">>> done!")
 
 def save(user, title, links):
@@ -91,25 +81,22 @@ def save(user, title, links):
     else:
         container[user] = {}
         container[user][title] = links
-    
+
 def flush():
     pywikibot.output("begin flushing")
-    global token, container
-    token = site.token(pagereport, "edit")
+    global container
     insertDisamT = wp.Page(conf.messageTemplate).get()
+    token = site.token(pagereport, "edit")
     for user in container:
         try:
-            notify(user, container[user], insertDisamT)
+            notify(wp.User(user), container[user], insertDisamT, token)
         except:
             wp.error()
     container = {}
     pywikibot.output("end flushing")
 
-def notifyreport(s):
+def notifyreport(s, token):
     pywikibot.output("save report function!")
-    if not token:
-        global token
-        token = site.token(pagereport, "edit")
     lapi.append(pagereport, s, conf.summary, token=token)
 
 def check(revision):
@@ -120,16 +107,16 @@ def check(revision):
     page = wp.Page(title)
     textnew = page.getOldVersion(revid)
     textold = u"" if oldrevid == 0 else page.getOldVersion(oldrevid)
-    
+
     if site.getRedirectText(textnew):
         return
     if site.getRedirectText(textold):
         textold = ""
-    
+
     addedlinks = (set(lapi.extractLinkedPages(site, textnew, title)) -
                 set(lapi.extractLinkedPages(site, textold, title)))
     disamlinks = []
-    
+
     for link in addedlinks:
         if ":" in link.title():
             continue
@@ -143,18 +130,18 @@ def check(revision):
                 disamlinks.append(lname)
         except:
             wp.error()
-    
+
     if disamlinks:
         save(revision["user"], title, set(disamlinks))
-    
+
 def main():
     def receive_signal(signum, stack):
         pywikibot.output("Flush immediately!")
         flush()
-    
+
     signal.signal(signal.SIGUSR2, receive_signal)
-        
-    todaynum = ltime.date.today().day
+
+    prevday = ltime.date.today().day
     for rev in lgenerator.recentchanges(site,
                                         showRedirects=False,
                                         changetype=["edit", "new"],
@@ -165,16 +152,14 @@ def main():
             check(rev)
         except:
             wp.error()
-        
-        pywikibot.output(wp.toutf(todaynum) + u" and " +
-                         wp.toutf(ltime.date.today().day))
-                         
-        if todaynum != ltime.date.today().day:
+
+        if ((prevday != ltime.date.today().day) and
+                       (ltime.date.today().day % 3 == 1)):
             try:
                 flush()
             except:
                 wp.error()
-            todaynum = ltime.date.today().day
+            prevday = ltime.date.today().day
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("notify linking to disambigous page",

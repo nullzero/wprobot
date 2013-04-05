@@ -7,7 +7,6 @@ I/O can be file or wiki page.
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
-
 import init
 import wp
 from wp import lre
@@ -16,14 +15,11 @@ def getdat(page, key=None):
     """
     Return value of given key, but if key is not given, return dict instead.
     """
-    key = wp.toutf(key) if key else None
+    key = wp.toutf(key)
     text = page.get()
     if key:
-        try:
-            dat = lre.find(u"(?m)^\* " + lre.escape(key) + 
-                           u": (.*?)$", text, 1)
-            if dat:
-                dat = wp.toutf(dat)
+        dat = wp.toutf(lre.find(u"(?m)^\* " + lre.escape(key) + 
+                       u": (.*?)$", text, 1))
     else:
         lines = text.strip().split("\n")
         dat = {}

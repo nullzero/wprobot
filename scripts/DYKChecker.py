@@ -13,161 +13,173 @@ import time
 from wp import lre
 
 def glob():
-    pass
+    global anchorBegin, anchorEnd, subst, anchor
+
+    anchor = ur"[\U00030000-\U000dffff]"
+    anchorBegin = int("30000", 16)
+    anchorEnd = int("dffff", 16)
+
+    subst = lre.subst()
+
+    # delete inline ref
+    subst.append((r"(?s)<ref[^>]*?/ *>", ""))
+    subst.append((r"(?s)<ref.*?</ref>", ""))
+
+    # delete external links
+    subst.append((r"(?s)(?<!\[)\[(?!\[) *http://.*?\]", ""))
+    subst.append((r"http://\S*", ""))
+
+    # delete gallery
+    subst.append((r"(?is)<gallery.*?>.*?</gallery>", ""))
+
+    # delete non article links, must be called before deleting links
+    subst.append((r"(?is)\[\[[^\]\|]*?\:.*?\]\]", ""))
+
+    # delete links
+    subst.append((r"\[\[[^\[\|]*?\|(.*?)\]\]", r"\1"))
+    subst.append((r"[\[\]]", ""))
+
+    # delete other markup
+    subst.append(("\'{2,}", ""))
+
+    # delete header
+    subst.append((r"(%(s)s)\=+.*?\=+ *(%(s)s)" % {"s": anchor}, r"\1\2"))
+
+    # delete list
+    subst.append((r"(%(s)s)[\:\*\#]*" % {"s": anchor}, r"\1"))
 
 def showdiff(a, b):
     out = []
     match = False
     i, j = 0, 0
+
     while i < len(a) and j < len(b):
         if match != (a[i] == b[j]):
             match = not match
-            out.append("~~~OPENSESAME~~~" if match else "~~~CLOSESESAME~~~")
+            out += list("~~~OPENSESAME~~~") if match else list("~~~CLOSESESAME~~~")
         out.append(a[i])
         i += 1
         j += int(match)
-        
-    return "".join(out + ["~~~CLOSESESAME~~~" if match else ""] + list(a[i:]))
+
+    return "".join(filter(lambda x: ord(x) < anchorBegin,
+                   out + list("~~~CLOSESESAME~~~" if match else "") + list(a[i:])))
 
 def rem(text):
     # delete table -- TODO: ^\{\{ or ^[\*\:\#]*\{\{
     text = lre.rmsym(r"\{\|", r"\|\}", text)
-    
     # delete template
     text = lre.rmsym(r"\{\{", r"\}\}", text)
-    
-    
-    subst = lre.subst()
-    
-    pywikibot.output("1234")
-    # delete inline ref
-    subst.append((r"(?s)<ref[^>]*?/\s*>", ""))
-    subst.append((r"(?s)<ref.*?</ref>", ""))
-    
-    # delete external links
-    subst.append((r"(?s)(?<!\[)\[(?!\[).*?\]", ""))
-    subst.append((r"http://\S*", ""))
-    
-    # delete gallery
-    subst.append((r"(?is)<gallery.*?>.*?</gallery>", ""))
-    
-    # delete non article links, must be called before deleting links
-    subst.append((r"(?is)\[\[[^\]\|]*?\:.*?\]\]", ""))
-    
-    # delete links
-    subst.append((r"[\[\]]", ""))
-    
-    # delete other markup
-    subst.append(("\'{2,}", ""))
-    
-    # delete header
-    subst.append((r"(?m)^\=+.*?\=+ *$", ""))
-    
-    # delete list
-    subst.append((r"(?m)^[\:\*\#]*", ""))
-    
-    
-    #-------
-    # delete consecutive space, this subst should be called last.
-    subst.append((r" +", " "))
-    
-    # delete many newlines, this subst should be called last.
-    subst.append((r"(\n{2})\n*", r"\1"))
-    #-------
-    
+
     text = subst.process(text)
-    
     text = pywikibot.removeDisabledParts(text)
     text = pywikibot.removeLanguageLinks(text)
     text = pywikibot.removeCategoryLinks(text)
     text = pywikibot.removeHTMLParts(text)
-    
+
     return text
 
 def main():
+    if "-html" not in args:
+        return
+
     page = wp.Page(wp.toutf(raw_input()))
     dic = {}
-    
+
     while True:
-        try:
-            oldtext = page.get()
-            break
-        except pywikibot.NoPage:
+        if not page.exists():
             dic["error"] = u"ไม่มีหน้าดังกล่าว"
             break
-        except pywikibot.IsRedirectPage:
+        elif page.isRedirectPage():
             page = page.getRedirectTarget()
-        except:
-            dic["error"] = u"เกิดข้อผิดพลาดไม่ทราบสาเหตุ"
+        else:
+            try:
+                oldtext = page.get()
+            except:
+
+                dic["error"] = u"เกิดข้อผิดพลาดไม่ทราบสาเหตุ"
             break
-    
+
     if "error" not in dic:
+        actuallen = lambda text: sum([int(32 < ord(i) < anchorBegin)
+                                 for i in text])
         resgen = lambda x: "passed" if x else "failed"
-        dateDistance = lambda x,y: ((time.mktime(y.timetuple()) -
-                       time.mktime(x.timetuple())) // (60 * 60 * 24))
-        
         oldtext = lre.sub(r"[\t\r\f\v]", " ", oldtext)
+
+        def placemarker(s):
+            placemarker.i += 1
+            return unichr((placemarker.i % (anchorEnd - anchorBegin + 1)) +
+                          anchorBegin)
+
+        placemarker.i = 0
+        oldtext = lre.sub("(?m)^|$", placemarker, oldtext)
+        oldtext = lre.sub(r"(?m)(?<=\|)(?=[^\[\]]*\]\])", placemarker, oldtext)
+        oldtext = lre.sub(r"(?m)(?<=\]\])", placemarker, oldtext)
+        oldtext = lre.sub(r"(?m)(?<!\{)(?=\{)", placemarker, oldtext)
         text = oldtext
-        text, numinline0 = lre.subn(r"(?s)<ref[^>]*?/\s*>", "", text)
+        text, numinline0 = lre.subn(r"(?s)<ref[^>]*?/ *>", "", text)
         text, numinline = lre.subn(r"(?s)<ref.*?</ref>", "", text)
         numinline += numinline0
         dic["inline"] = {}
-        dic["inline"]["value"] = (u"มีอ้างอิงในบรรทัดทั้งหมดจำนวน %d แห่ง" % 
+        dic["inline"]["value"] = (u"มีอ้างอิงในบรรทัดทั้งหมดจำนวน %d แห่ง" %
                                   numinline)
         dic["inline"]["result"] = "normal"
         dic["inline"]["text"] = u"อ้างอิง"
         text = rem(text)
-        #dic["dtext"] = text
+        lentext = actuallen(text)
         dic["newtext"] = showdiff(oldtext, text)
         dic["len"] = {}
         dic["len"]["text"] = u"ความยาว"
-        dic["len"]["result"] = resgen(len(text) >= 2000)
-        dic["len"]["value"] = u"%d อักขระ..." % len(text)
-        
+        dic["len"]["result"] = resgen(lentext >= 2000)
+        dic["len"]["value"] = u"%d อักขระ..." % lentext
+
         now = site.getcurrenttime()
         revid = None
-        
+
         for rev in page.getVersionHistory(total=5000):
             ts = pywikibot.Timestamp.fromISOformat(rev[1])
-            if dateDistance(ts, now) <= 14:
+            if (now - ts).days <= 14:
                 revid = rev[0]
                 revtimestamp = ts
-        
+
         dic["oldlen"] = {}
         dic["oldlen"]["text"] = u"รุ่นเก่า"
-        
+
         if revid is None:
             dic["oldlen"]["result"] = resgen(False)
             dic["oldlen"]["value"] = u"ไม่พบรุ่นเก่าภายในเวลา 14 วัน"
         else:
-            lenold = len(rem(page.getOldVersion(revid)))
+            lenold = actuallen(rem(page.getOldVersion(revid)))
             dic["oldlen"]["result"] = resgen(
-                                    (float(len(text))/float(lenold)) >= 3.0)
-            dic["oldlen"]["value"] = (u"รุ่นเก่าเมื่อ %s มีความยาว %d อักขระ "
+                                    (float(lentext)/float(lenold)) >= 3.0)
+            dic["oldlen"]["value"] = (u"รุ่นเก่าเมื่อ %s (%d วันที่แล้ว) "
+                                      u"มีความยาว %d อักขระ "
                                       u"จะได้ว่าขณะนี้มีเนื้อหาเป็น %.3f "
-                                      u"เท่าเมื่อเทียบกับขณะนั้น..." % 
+                                      u"เท่าเมื่อเทียบกับขณะนั้น..." %
                                 (revtimestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                                      lenold, float(len(text))/float(lenold)))
-        
+                                (now - revtimestamp).days, lenold,
+                                float(lentext)/float(lenold)))
+
         creator = page.getVersionHistory(reverseOrder=True, total=1)[0]
         tscreate = pywikibot.Timestamp.fromISOformat(creator[1])
         dic["create"] = {}
         dic["create"]["text"] = u"สร้างบทความ"
-        dic["create"]["result"] = resgen(dateDistance(tscreate, now) <= 14)
-        dic["create"]["value"] = u"บทความนี้สร้างโดย %s เมื่อ %s..." % (
-                        creator[2], tscreate.strftime("%Y-%m-%d %H:%M:%S"))
-                                 
+        dic["create"]["result"] = resgen((now - tscreate).days <= 14)
+        dic["create"]["value"] = (u"บทความนี้สร้างโดย %s "
+                                  u"เมื่อ %s (%d วันที่แล้ว)" % (creator[2],
+                                  tscreate.strftime("%Y-%m-%d %H:%M:%S"),
+                                  (now - tscreate).days))
+
         if ((dic["create"]["result"] == resgen(True)) or
-                                        (dic["oldlen"]["result"] == 
+                                        (dic["oldlen"]["result"] ==
                                         resgen(True))):
             if dic["create"]["result"] == resgen(False):
                 dic["create"]["result"] = "normal"
-                
+
             if dic["oldlen"]["result"] == resgen(False):
                 dic["oldlen"]["result"] = "normal"
-    
+
     print json.dumps(dic)
-    
+
 if __name__ == "__main__":
     args, site, conf = wp.pre("DYK Checker")
     try:

@@ -6,7 +6,9 @@ Provide some frequently used regex.
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
+import init
 import re
+import pywikibot
 
 class lre(object):
     def __init__(self, pat):
@@ -16,7 +18,7 @@ class lre(object):
         return self.regex.search(text)
         
     def find(self, text, group=0):
-        _x = self.regex.search(text)
+        _x = self.search(text)
         if _x:
             return _x.group(group)
         else:

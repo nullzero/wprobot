@@ -15,6 +15,7 @@ import traceback
 import datetime
 import imp
 import pywikibot
+import pywikibot.site
 from conf import glob as conf
 
 def onload():
@@ -29,14 +30,18 @@ def glob():
 
 def tostr(st):
     """Return normal quoted string."""
+    if not st:
+        return None
     try:
         st = str(st)
     except UnicodeEncodeError:
         st = st.encode("utf-8")
     return st
-    
+
 def toutf(st):
     """Return unicode quoted string."""
+    if not st:
+        return None
     try:
         st = unicode(st)
     except UnicodeDecodeError:
@@ -55,7 +60,7 @@ def error(e=None):
         if (exc == KeyboardInterrupt) or (exc == SystemExit):
             sys.exit()
         pywikibot.output(u"E: " + toutf(traceback.format_exc()))
-    
+
 def getTime():
     """Print timestamp."""
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -63,7 +68,7 @@ def getTime():
 def simplifypath(path):
     return os.path.abspath(os.path.expanduser(os.path.join(*path)))
 
-def pre(name, lock=False):
+def pre(name, lock=False, sites=[]):
     """
     Return argument list, site object, and configuration of the script.
     This function also handles default arguments, generates lockfile
@@ -73,9 +78,15 @@ def pre(name, lock=False):
     args = pywikibot.handleArgs() # must be called before getSite()
     site = pywikibot.getSite()
     sysop = False
-    if not (site.logged_in(sysop) and site.user() == site.username(sysop)):
-        site.login()
-        
+    sites.append(site)
+
+    for site_i in sites:
+        if not isinstance(site_i, pywikibot.site.APISite):
+            site_i = pywikibot.getSite(fam=site_i[0], code=site_i[1])
+        if not (site_i.logged_in(sysop) and
+                site_i.user() == site_i.username(sysop)):
+            site_i.login()
+
     global fullname, lockfile
     pywikibot.handleArgs("-log")
     fullname = name
@@ -89,7 +100,7 @@ def pre(name, lock=False):
             sys.exit()
         open(lockfile, 'w').close()
 
-    confpath = simplifypath([os.environ["WPROBOT_DIR"], "conf", 
+    confpath = simplifypath([os.environ["WPROBOT_DIR"], "conf",
                                 basescript])
     if os.path.exists(confpath):
         module = imp.load_source("conf", confpath)
@@ -124,11 +135,21 @@ def handlearg(start, arg):
     else:
         return None
 
+"""
+Shortcut function.
+"""
+
 def Page(title):
+    global site
     if not site:
-        global site
         site = pywikibot.getSite()
     return pywikibot.Page(site, title)
+
+def User(title):
+    global site
+    if not site:
+        site = pywikibot.getSite()
+    return pywikibot.User(site, title)
 
 glob()
 onload()
