@@ -16,6 +16,7 @@ import datetime
 import imp
 import pywikibot
 import pywikibot.site
+from pywikibot import config
 from conf import glob as conf
 
 def onload():
@@ -68,7 +69,15 @@ def getTime():
 def simplifypath(path):
     return os.path.abspath(os.path.expanduser(os.path.join(*path)))
 
-def pre(name, lock=False, sites=[]):
+def _login(namedict, sysop=False):
+    for familyName in namedict:
+        for lang in namedict[familyName]:
+            site = pywikibot.getSite(code=lang, fam=familyName)
+            if not (site.logged_in(sysop) and
+                    site.user() == site.username(sysop)):
+                site.login()
+
+def pre(name, lock=False):
     """
     Return argument list, site object, and configuration of the script.
     This function also handles default arguments, generates lockfile
@@ -77,15 +86,9 @@ def pre(name, lock=False, sites=[]):
     global site
     args = pywikibot.handleArgs() # must be called before getSite()
     site = pywikibot.getSite()
-    sysop = False
-    sites.append(site)
 
-    for site_i in sites:
-        if not isinstance(site_i, pywikibot.site.APISite):
-            site_i = pywikibot.getSite(fam=site_i[0], code=site_i[1])
-        if not (site_i.logged_in(sysop) and
-                site_i.user() == site_i.username(sysop)):
-            site_i.login()
+    _login(config.usernames)
+    _login(config.sysopnames, sysop=True)
 
     global fullname, lockfile
     pywikibot.handleArgs("-log")

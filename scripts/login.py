@@ -1,5 +1,5 @@
 # -*- coding: utf-8  -*-
-"""Test page"""
+"""Login"""
 
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
@@ -7,15 +7,16 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
+from pywikibot import config
 
 def glob():
     pass
 
 def main():
-    
+    pass
         
 if __name__ == "__main__":
-    args, site, conf = wp.pre("test")
+    args, site, conf = wp.pre("login")
     try:
         glob()
         main()
