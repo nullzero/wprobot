@@ -1,0 +1,10 @@
+0 * * * * /home/nullzero/wprobot/commands/moveCategory.sh
+43 */6 * * * /home/nullzero/wprobot/commands/clearSandbox.sh
+21 23 */15 * * /home/nullzero/wprobot/commands/topEdits.sh
+#7 15 */15 * * /home/nullzero/wp/wpmanager r cleandead
+37 1 * * * /home/nullzero/wp/wpmanager r redirect
+#24 17 */15 * * /home/nullzero/wp/wpmanager r star
+#15 7 * * * /home/nullzero/wp/wpmanager r uncategorize
+#7 7 * * * /home/nullzero/wp/wpmanager r unnecessary_redirect
+#35 0 * * * /home/nullzero/wp/wpmanager r update
+#32 13 3 * * /home/nullzero/wp/wpmanager r veryshort

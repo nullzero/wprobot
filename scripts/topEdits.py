@@ -13,20 +13,24 @@ def isbot(data):
     return (("bot" in data["groups"]) or 
             any([pati.search(data["name"]) for pati in conf.patbot]))
 
-def dowrite(path, data):
+def dowrite(path, data, activedata):
     pretext = u"ปรับปรุงล่าสุด %s\n\n{{/begin|500}}\n" % wp.getTime()
     entry = []
     cnt = 1
     
     for i in data:
-        entry.append(u"|-\n| %(cnt)d || [[User:%(name)s|%(name)s]]"
+        entry.append(u"|-\n| %(cnt)d || [[User:%(name)s|%(op)s%(name)s%(ed)s]]"
                      u" %(sys)s %(bot)s || [[Special:Contributions/%(name)s"
                      u"|%(edit)s]]\n" % {
                         "cnt":  cnt,
                         "name": i["name"],
                         "sys":  "(Admin)" if ("sysop" in i["groups"]) else "",
-                        "bot":  "(Bot)" if ("bot" in i["groups"]) else "",
+                        "bot":  "(Bot)" if isbot(i) else "",
                         "edit": i["editcount"],
+                        "op": '<span style="color:grey">' if 
+                              (i["name"] not in activedata) else '',
+                        "ed": '</span>' if 
+                              (i["name"] not in activedata) else '',
                     })
         cnt += 1
     
@@ -35,8 +39,8 @@ def dowrite(path, data):
     
     dummy, posttext = gettext.split(u"{{/end}}")
     
-    page.put(pretext + u"".join(entry) + u"{{/end}}" + posttext, conf.summary)
-    pywikibot.output(u"done!")
+    page.put(pretext + "".join(entry) + "{{/end}}" + posttext, conf.summary)
+    pywikibot.output("done!")
     
 def main():
     funcSortedList = lambda a, b: b["editcount"] - a["editcount"]
@@ -45,15 +49,24 @@ def main():
     cntuser = 0
     for user in site.allusers():
         if cntuser % conf.maxnum == 0:
-            pywikibot.output(u"processing (%d): %s" % (cntuser / conf.maxnum,
+            pywikibot.output(u"processing (%d): %s" % (cntuser // conf.maxnum,
                                                        user["name"]))
         includelist.append(user)
         if not isbot(user):
             excludelist.append(user)
         cntuser += 1
+    
+    activedata = set()
+    
+    for user in site.allusers(onlyActive=True):
+        activedata.add(user["name"])
             
-    dowrite(conf.path + conf.botsuffix, includelist.get()[:conf.allentries])
-    dowrite(conf.path, excludelist.get()[:conf.allentries])
+    dowrite(conf.path + conf.botsuffix,
+            includelist.get()[:conf.allentries],
+            activedata)
+    dowrite(conf.path,
+            excludelist.get()[:conf.allentries],
+            activedata)
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("update top users who edit most",

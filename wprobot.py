@@ -4,14 +4,16 @@ def init():
     import sys
     
     def simplifypath(*path):
-        return os.path.abspath(
-                os.path.expanduser(os.path.join(*path)))
+        return os.path.abspath(os.path.expanduser(os.path.join(*path)))
     
     for ind, arg in enumerate(sys.argv):
         if arg.startswith("-bot:"):
             os.environ["WPROBOT_BOT"] = arg[len("-bot:"):]
             sys.argv.pop(ind)
             break
+    else:
+        print "Please specify bot's name by parameter -bot:"
+        sys.exit()
             
     dirbot = simplifypath(os.environ["WPROBOT_DIR"], "bots", 
                           os.environ["WPROBOT_BOT"])
@@ -22,7 +24,10 @@ def init():
     import conf.conf
     sys.path.append(simplifypath(conf.conf.pywikibotDir))
     sys.path.append(simplifypath(conf.conf.pywikibotDir) + "/externals/httplib2")
-    import wp.patch
+    
+    patchPath = simplifypath(os.environ["WPROBOT_DIR"], "patch")
+    for f in os.listdir(patchPath):
+        execfile(os.path.join(patchPath, f))
     
     if __name__ == "__main__":
         sys.argv.pop(0)

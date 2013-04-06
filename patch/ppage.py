@@ -1,11 +1,7 @@
 # -*- coding: utf-8  -*-
 
 import pywikibot.page
-import pywikibot.site
 
-"""
-========================================================================
-"""
 def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
                     inPlace=True):
     """Remove page from oldCat and add it to newCat.
@@ -114,20 +110,3 @@ pywikibot.page.Page.change_category = _change_category
 """
 ========================================================================
 """
-
-def _getRedirectText(self, text):
-    """
-    Return target of redirection. Since we obtain data from text, 
-    there's no need to worry about passing section.
-    """
-    if hasattr(self, "patRedir"):
-        m = self.patRedir.match(text)
-        if m:
-            return m.group(1)
-        else:
-            return False
-    else:
-        self.patRedir = self.redirectRegex()
-        return self.getRedirectText(text)
-
-pywikibot.site.APISite.getRedirectText = _getRedirectText

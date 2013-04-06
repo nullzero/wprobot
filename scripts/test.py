@@ -13,8 +13,7 @@ def glob():
     pass
 
 def main():
-    print "a" + u"ก" + "d"
-        
+    pywikibot.output("abcdef")
         
 if __name__ == "__main__":
     #sites = [("wikidata", "repo")]

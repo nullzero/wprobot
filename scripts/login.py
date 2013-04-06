@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
-"""example"""
+# -*- coding: utf-8  -*-
+"""Test page"""
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
 import init
@@ -12,14 +12,15 @@ def glob():
     pass
 
 def main():
-    pass
-
+    
+        
 if __name__ == "__main__":
-    args, site, conf = preload.pre("example", lock=True)
+    args, site, conf = wp.pre("test")
     try:
         glob()
         main()
     except:
-        preload.posterror()
+        wp.posterror()
     else:
-        preload.post()
+        pass
+        wp.post()

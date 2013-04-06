@@ -1,0 +1,37 @@
+#!/bin/bash
+
+function _runwp(){
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="r rm new test"
+    
+    if [[ ${COMP_CWORD} -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+    
+    case "$prev" in
+    "r")
+        local files=$(for x in scripts/* ; do \
+                                echo ${x##*/} ; \
+                                done)
+        COMPREPLY=( $(compgen -W "${files}" -- ${cur}) )
+        ;;
+    "rm")
+        local optsrm="git lock pyc delay log"
+        COMPREPLY=( $(compgen -W "${optsrm}" -- ${cur}) )
+        ;;
+    "new")
+        local optsrm="script user"
+        COMPREPLY=( $(compgen -W "${optsrm}" -- ${cur}) )
+        ;;
+    #"open")
+        #local files=$(for x in * ; do \
+                                echo ${x##*/} ; \
+                                done)
+        #_filedir
+        #;;
+    esac
+} && complete -F _runwp runwp

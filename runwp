@@ -1,7 +1,5 @@
 #!/bin/bash
 
-current_dir="$(dirname $0)"
-
 error(){
     message="$1"
     if test -z "$message"; then
@@ -16,27 +14,45 @@ end(){
     echo "$>> $1เรียบร้อย"
 }
 
-createuser(){
+newuser(){
     botname="$1"
     (test -z "$botname") && error "โปรดระบุชื่อบอต"
-    cd pywikipedia
-    python generate_user_files.py
-    cd ../bots
-    mkdir "$botname"
-    cd "$botname"
-    ln -s ../../pywikipedia/families
-    ln -s ../../pywikipedia/userinterfaces
-    mv ../../pywikipedia/user-config.py .
-    python ../../pywikipedia/login.py
+    name=.$RANDOM
+    cp templates/user-config.py tmp/$name
+    nano tmp/$name
+    if ! diff tmp/$name templates/user-config.py; then
+        mkdir bots/$botname
+        mv tmp/$name bots/$botname/user-config.py
+    fi
+}
+
+new(){
+    command="$1"
+    shift
+    case "$command" in
+    "script")
+        echo "NotImplemented"
+        ;;
+    "user")
+        newuser "$@"
+        ;;
+    *)
+        error "เรียกใช้พารามิเตอร์ไม่ถูกต้อง"
+        ;;
+    esac
 }
 
 testscript(){
     cd bots
     for i in *; do
-        cd $i
-        python ./../../pywikipedia/replace.py -page:User:"$i"/ts -regex "(?s)^(.*)$" "$RANDOM" -summary:ทดสอบ -always
-        cd ..
+        python ../scripts/login.py -bot:$i
     done
+}
+
+run(){
+    script="$1"
+    shift
+    python ./scripts/"$script" "$@" -bot:Nullzerobot
 }
 
 remove(){
@@ -44,12 +60,12 @@ remove(){
     shift
     case "$command" in
     "lock")
-        rm "${current_dir}"/tmp/*.lock
+        rm -v tmp/*.lock
         echo "$>> ปลดล็อกแล้ว"
         ;;
     "pyc")
-        find "${current_dir}" -type f | grep -P "\.pyc$" | xargs rm
-        find "${current_dir}" -type f | grep -P "\.pyo$" | xargs rm
+        find . -type f | grep -P "\.pyc$" | xargs rm
+        find . -type f | grep -P "\.pyo$" | xargs rm
         echo "$>> ลบไฟล์ pyc เรียบร้อย"
         ;;
     "git")
@@ -62,23 +78,33 @@ remove(){
         find ./bots -type f | grep "throttle.ctrl" | xargs rm
         echo "$>> ล้างไฟล์หน่วงแล้ว"
         ;;
+    "log")
+        echo "NotImplemented"
+        ;;
     *)
         error "เรียกใช้พารามิเตอร์ไม่ถูกต้อง"
         ;;
     esac
 }
 
-cd "$current_dir"
+cd "$(dirname $0)"
 mode="$1"
 shift
 case "$mode" in
 "r")
-    script="$1"
-    shift
-    python ./scripts/"$script" "$@" -bot:Nullzerobot
+    run "$@"
     ;;
 "rm")
     remove "$@"
+    ;;
+"new")
+    new "$@"
+    ;;
+"test")
+    testscript
+    ;;
+"setup")
+    cp templates/bash_completion ~/.wprobotrc
     ;;
 *)
     error "เรียกใช้พารามิเตอร์ไม่ถูกต้อง"
