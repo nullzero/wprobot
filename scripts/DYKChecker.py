@@ -139,6 +139,10 @@ def main():
             if (now - ts).days <= 14:
                 revid = rev[0]
                 revtimestamp = ts
+            else:
+                revid = rev[0]
+                revtimestamp = ts
+                break
 
         dic["oldlen"] = {}
         dic["oldlen"]["text"] = u"รุ่นเก่า"

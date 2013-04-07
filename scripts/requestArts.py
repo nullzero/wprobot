@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
 Update reqired articles at RECENTCHANGES page. The articles are obtained
