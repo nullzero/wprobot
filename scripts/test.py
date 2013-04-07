@@ -14,17 +14,14 @@ def glob():
     pass
 
 def main():
-    pages = ["A", "adsads", "B", "dsadsa"]
-    text = lapi.parse(site, "\n".join(
-                      ['* ("%(page)s", {{PAGESIZE:%(page)s|R}}, %(en)s)' % 
-                      {"page": page[0], } for page in pages]))
-    for line in lre.findall("(?<=<li>).*?(?=</li>)", text):
-        dat = eval(line)
-        if dat[1] > 0:
-            
+    pass
     
 if __name__ == "__main__":
-    args, site, conf = wp.pre("test")
+    sites = [pywikibot.getSite("i18n", "i18n"), 
+             pywikibot.getSite("wikidata", "wikidata"),
+             pywikibot.getSite("th", "wikibooks"),
+             pywikibot.getSite("th", "wikipedia"),]
+    args, site, conf = wp.pre("test", sites=sites)
     try:
         glob()
         main()

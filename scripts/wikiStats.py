@@ -14,9 +14,10 @@ def glob():
     global pageMain, contentMain
     pageMain = None
     contentMain = None
+    lre.pats["tspan"] = lre.lre("<.*?>")
 
 def firstContributor(title):
-    name = pywikibot.Page(site, title).getCreator()[0]
+    name = wp.Page(title).getVersionHistory(reverseOrder=True, total=1)[0][2]
     if wp.User(name).isAnonymous():
         return "-"
     else:
@@ -24,14 +25,17 @@ def firstContributor(title):
 
 def pagestat(): 
     allpages = ldata.LimitedSortedList(lambda a, b: b[0] - a[0])
-    pool = lthread.ThreadPool(10)
+    pool = lthread.ThreadPool(20)
     
     def localAdd(_allpages, _page):
         _allpages.append((len(_page.getVersionHistory()), _page.title()))
-        
+    
+    counter = 0
     for page in site.allpages(filterredir=False):
-        pywikibot.output(u">>> %s" % page.title())
+        if counter % 1000 == 0:
+            pywikibot.output("(%d) processing " % counter + page.title())
         pool.add_task(localAdd, allpages, page)
+        counter += 1
     pool.wait_completion()
     
     return allpages.get()
@@ -49,9 +53,7 @@ def getdat(regex):
         table.append([x.strip() for x in line.split("||")])
     
     for i in xrange(len(table)):
-        print table[i][0]
-        table[i][0] = (lre.pats["link"].find(table[i][0], "title") + 
-                       lre.pats["link"].find(table[i][0], "name"))
+        table[i][0] = lre.pats["link"].find(table[i][0])[2:-2]
     return table
 
 def tag(x):
@@ -125,7 +127,6 @@ def longpages():
     table = []
     regexLong = lre.genData(conf.tagind, u"บทความยาวสุด")
     oldlongpages = getdat(regexLong)
-    print oldlongpages
     for page, length in site.longpages(total=5):
         table.append([page.title(), getrankold(page.title(), oldlongpages),
                     length])
@@ -145,10 +146,10 @@ def mosteditsUser():
             continue
         if line.startswith(u"|"):
             line = [x.strip() for x in line[1:].split(u"||")]
-            name = (lre.pats["link"].find(line[1], "title") +
-                    lre.pats["link"].find(line[1], "name"))
-            cnt = lre.pats["link"].find(line[2], "name")
-            if int(cnt[1:]) < int(limit):
+            name = lre.pats["tspan"].sub("", 
+                   lre.pats["link"].find(line[1])[2:-2])
+            cnt = lre.pats["link"].find(line[2], "name")[1:]
+            if int(cnt) < int(limit):
                 break
             table.append([name, getrankold(name, oldusers), cnt])
     writetable(table, regexUser)
@@ -157,7 +158,7 @@ def main():
     global pageMain, contentMain
     pageMain = pywikibot.Page(site, u"วิกิพีเดีย:ที่สุดในวิกิพีเดียภาษาไทย")
     contentMain = pageMain.get()
-    #mosteditsArt()
+    mosteditsArt()
     longpages()
     mosteditsUser()
     flush()

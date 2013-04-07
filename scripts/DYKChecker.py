@@ -112,8 +112,9 @@ def main():
         placemarker.i = 0
         oldtext = lre.sub("(?m)^|$", placemarker, oldtext)
         oldtext = lre.sub(r"(?m)(?<=\|)(?=[^\[\]]*\]\])", placemarker, oldtext)
-        oldtext = lre.sub(r"(?m)(?<=\]\])", placemarker, oldtext)
+        oldtext = lre.sub(r"(?m)(?<=\])(?!\])", placemarker, oldtext)
         oldtext = lre.sub(r"(?m)(?<!\{)(?=\{)", placemarker, oldtext)
+        oldtext = lre.sub(r"(?m)(?<=\})(?!\})", placemarker, oldtext)
         text = oldtext
         text, numinline0 = lre.subn(r"(?s)<ref[^>]*?/ *>", "", text)
         text, numinline = lre.subn(r"(?s)<ref.*?</ref>", "", text)
@@ -136,14 +137,12 @@ def main():
 
         for rev in page.getVersionHistory(total=5000):
             ts = pywikibot.Timestamp.fromISOformat(rev[1])
+            revid = rev[0]
             if (now - ts).days <= 14:
-                revid = rev[0]
                 revtimestamp = ts
             else:
-                revid = rev[0]
-                revtimestamp = ts
                 break
-
+                
         dic["oldlen"] = {}
         dic["oldlen"]["text"] = u"รุ่นเก่า"
 
@@ -154,7 +153,8 @@ def main():
             lenold = actuallen(rem(page.getOldVersion(revid)))
             dic["oldlen"]["result"] = resgen(
                                     (float(lentext)/float(lenold)) >= 3.0)
-            dic["oldlen"]["value"] = (u"รุ่นเก่าเมื่อ %s (%d วันที่แล้ว) "
+            dic["oldlen"]["value"] = (u"รุ่นเก่าก่อนการแก้ไขเมื่อ %s "
+                                      u"(%d วันที่แล้ว) "
                                       u"มีความยาว %d อักขระ "
                                       u"จะได้ว่าขณะนี้มีเนื้อหาเป็น %.3f "
                                       u"เท่าเมื่อเทียบกับขณะนั้น..." %

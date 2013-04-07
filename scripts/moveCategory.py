@@ -214,7 +214,7 @@ def main():
     appendTable(conf.pageMinor, pending)
 
 if __name__ == "__main__":
-    sites = [pywikibot.getSite("wikidata", "wikidata")]
+    sites = [pywikibot.getSite(code="wikidata", fam="wikidata")]
     args, site, conf = wp.pre("move category service", lock=True,
                               sites=sites)
     try:

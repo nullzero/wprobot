@@ -91,10 +91,10 @@ def pre(name, lock=False, sites=None):
         _login(config.usernames)
         _login(config.sysopnames, sysop=True)
     else:
-        _login({site.family.name: {site.lang: None}})
+        _login({site.family.name: {site.code: None}})
         if sites:
             for isite in sites:
-                _login({isite.family.name: {isite.lang: None}})
+                _login({isite.family.name: {isite.code: None}})
 
     global fullname, lockfile
     pywikibot.handleArgs("-log")
