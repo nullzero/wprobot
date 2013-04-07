@@ -54,3 +54,14 @@ def append(page, text, comment=u'', minorEdit=True, botflag=True,
         r.submit()
     except:
         wp.error()
+
+def parse(site, text):
+    r = api.Request(site=site,
+                    action="parse",
+                    text=text)
+    try:
+        result = r.submit()
+    except:
+        wp.error()
+    else:
+        return result['parse']['text']['*']

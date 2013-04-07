@@ -8,17 +8,23 @@ import init
 import wp
 import pywikibot
 from pywikibot import pagegenerators
+from wp import lapi, lre
 
 def glob():
     pass
 
 def main():
-    pywikibot.output("abcdef")
-        
+    pages = ["A", "adsads", "B", "dsadsa"]
+    text = lapi.parse(site, "\n".join(
+                      ['* ("%(page)s", {{PAGESIZE:%(page)s|R}}, %(en)s)' % 
+                      {"page": page[0], } for page in pages]))
+    for line in lre.findall("(?<=<li>).*?(?=</li>)", text):
+        dat = eval(line)
+        if dat[1] > 0:
+            
+    
 if __name__ == "__main__":
-    #sites = [("wikidata", "repo")]
-    sites = []
-    args, site, conf = wp.pre("test", sites=sites)
+    args, site, conf = wp.pre("test")
     try:
         glob()
         main()

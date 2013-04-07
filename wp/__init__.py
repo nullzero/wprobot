@@ -77,7 +77,7 @@ def _login(namedict, sysop=False):
                     site.user() == site.username(sysop)):
                 site.login()
 
-def pre(name, lock=False):
+def pre(name, lock=False, sites=None):
     """
     Return argument list, site object, and configuration of the script.
     This function also handles default arguments, generates lockfile
@@ -86,9 +86,15 @@ def pre(name, lock=False):
     global site
     args = pywikibot.handleArgs() # must be called before getSite()
     site = pywikibot.getSite()
-
-    _login(config.usernames)
-    _login(config.sysopnames, sysop=True)
+    
+    if sites == True:
+        _login(config.usernames)
+        _login(config.sysopnames, sysop=True)
+    else:
+        _login({site.family.name: {site.lang: None}})
+        if sites:
+            for isite in sites:
+                _login({isite.family.name: {isite.lang: None}})
 
     global fullname, lockfile
     pywikibot.handleArgs("-log")

@@ -1,6 +1,6 @@
 #!/bin/bash
 #$ -l h_rt=2:00:00
-#$ -l virtual_free=20M
+#$ -l virtual_free=100M
 #$ -l arch=*
 #$ -o /dev/null
 #$ -e /dev/null
