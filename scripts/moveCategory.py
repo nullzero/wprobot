@@ -53,25 +53,26 @@ def copyAndKeep(oldcat, catname):
     Returns true if copying was successful, false if target page already
     existed.
     """
+    result = True
     targetCat = pywikibot.Page(oldcat.site, catname, ns=14)
     if targetCat.exists():
+        result = False
         pywikibot.output('Target page %s already exists!' % targetCat.title())
-        return False
+    else:
+        pywikibot.output('Moving text from %s to %s.' %
+                        (oldcat.title(), targetCat.title()))
 
-    pywikibot.output('Moving text from %s to %s.' %
-                    (oldcat.title(), targetCat.title()))
-
-    targetCat.put(oldcat.get(), u'โรบอต: ย้ายจาก %s. ผู้ร่วมเขียน: %s' %
-                (oldcat.title(), ', '.join(oldcat.contributingUsers())))
-
+        targetCat.put(oldcat.get(), u'โรบอต: ย้ายจาก %s. ผู้ร่วมเขียน: %s' %
+                    (oldcat.title(), ', '.join(oldcat.contributingUsers())))
+                    
     item = pywikibot.ItemPage.fromPage(oldcat)
-    if item.exists():
+    testitem = pywikibot.ItemPage.fromPage(targetCat)
+    if not testitem.exists() and item.exists():
         item.editEntity({'sitelinks': {site.dbName(): {'site': site.dbName(),
                                                 'title': targetCat.title()}},
                          'labels': {site.code: {'language': site.code,
                                                 'value': targetCat.title()}}})
-    return True
-
+    return result
 
 class CategoryMoveRobot:
     """Robot to move pages from one category to another."""
@@ -109,7 +110,7 @@ class CategoryMoveRobot:
                         if talkMoved:
                             oldMovedTalk = oldTalk
 
-        pool = lthread.ThreadPool(10)
+        pool = lthread.ThreadPool(30)
 
         def localchange(article, oldCat, newCat, comment):
             if ((not article.change_category(oldCat, newCat, comment)) and
@@ -153,7 +154,7 @@ def domove(source, dest):
     pywikibot.output(u"Move from " + source + u" to " + dest)
     robot = CategoryMoveRobot(source, dest)
     robot.run()
-    pageCat = wp.Page(source)
+    pageCat = wp.Page("Category:" + source)
     if pageCat.exists():
         content = pageCat.get()
         res = patTagDel.find(content)
@@ -190,7 +191,9 @@ def main():
                                               confpage=wp.Page(conf.datwiki),
                                               operation=operation,
                                               verify=verify,
-                                              summary=summaryWithTime)
+                                              summary=summaryWithTime,
+                                              #debug=True,
+                                              )
 
     report = []
     pending = []
@@ -214,7 +217,7 @@ def main():
     appendTable(conf.pageMinor, pending)
 
 if __name__ == "__main__":
-    sites = [pywikibot.getSite(code="wikidata", fam="wikidata")]
+    sites = [pywikibot.getSite("wikidata", "wikidata")]
     args, site, conf = wp.pre("move category service", lock=True,
                               sites=sites)
     try:

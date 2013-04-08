@@ -7,21 +7,17 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
-from pywikibot import pagegenerators
-from wp import lapi, lre
+from wp import lapi
 
 def glob():
     pass
 
 def main():
-    pass
+    page = wp.Page(u'วิกิพีเดีย:ทดลองเขียน')
+    page.put(u"asd" * 20, "asd")
     
 if __name__ == "__main__":
-    sites = [pywikibot.getSite("i18n", "i18n"), 
-             pywikibot.getSite("wikidata", "wikidata"),
-             pywikibot.getSite("th", "wikibooks"),
-             pywikibot.getSite("th", "wikipedia"),]
-    args, site, conf = wp.pre("test", sites=sites)
+    args, site, conf = wp.pre("test")
     try:
         glob()
         main()

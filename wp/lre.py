@@ -113,5 +113,4 @@ def rmsym(begin, end, text):
 """ More patterns! """
 pats = {
     "link": lre(r"\[\[(?P<title>[^\]\|\[]*)(?P<name>\|.*?)?\]\]"),
-    # include "|" to "P<name>" to distinguish [[abc|]] and [[abc]]
 }

@@ -158,7 +158,7 @@ def main():
     global pageMain, contentMain
     pageMain = pywikibot.Page(site, u"วิกิพีเดีย:ที่สุดในวิกิพีเดียภาษาไทย")
     contentMain = pageMain.get()
-    mosteditsArt()
+    #mosteditsArt()
     longpages()
     mosteditsUser()
     flush()

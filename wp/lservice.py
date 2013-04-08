@@ -38,7 +38,7 @@ def service(page, confpage, operation, verify, summary, debug=False):
     oldcontent = page.get()
     header, table = lwikitable.wiki2table(oldcontent)
     disable = [False] * len(table)
-    hist = page.getVersionHistory(step=100)
+    hist = page.getVersionHistory(total=100)
     # There is no need to get all revisions, just 100 is fine.
     histlist = []
 
@@ -71,9 +71,8 @@ def service(page, confpage, operation, verify, summary, debug=False):
         if not debug:
             page = pywikibot.Page(page)
             page.put(newcontent, summary())
-
-        pywikibot.output(page.getVersionHistory()[0][0])
-        linfo.putdat(confpage, operation, page.getVersionHistory()[0][0])
+            pywikibot.output(page.getVersionHistory(total=1)[0][0])
+            linfo.putdat(confpage, operation, page.getVersionHistory()[0][0])
 
     return header, table, disable
 

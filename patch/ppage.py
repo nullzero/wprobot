@@ -17,6 +17,7 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
     FIX: return True if succeed. Otherwise, return False.
     """
     #TODO: is inPlace necessary?
+    import pywikibot
     site = self.site
     changesMade = False
 
@@ -89,7 +90,6 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
                     u'Skipping %s because of interwiki link to self' % self)
         try:
             self.put(text, comment)
-            return True
         except pywikibot.EditConflict:
             pywikibot.output(
                     u'Skipping %s because of edit conflict' % self.title())
@@ -103,6 +103,8 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
         except pywikibot.PageNotSaved, error:
             pywikibot.output(u"Saving page %s failed: %s"
                              % (self.title(asLink=True), error.message))
+        else:
+            return True
     return False
 
 pywikibot.page.Page.change_category = _change_category
