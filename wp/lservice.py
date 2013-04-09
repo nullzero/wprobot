@@ -69,7 +69,7 @@ def service(page, confpage, operation, verify, summary, debug=False):
 
     if oldcontent != newcontent:
         if not debug:
-            page = pywikibot.Page(page)
+            page = wp.Page(page.title())
             page.put(newcontent, summary())
             pywikibot.output(page.getVersionHistory(total=1)[0][0])
             linfo.putdat(confpage, operation, page.getVersionHistory()[0][0])

@@ -23,11 +23,12 @@ def glob():
     translateKey[u"ต้นทาง"] = "source"
     translateKey[u"แจ้ง"] = "notifyuser"
     translateKey[u"กระบะทราย"] = "sandbox"
+    translateKey[u"พัก"] = "disable"
 
     textnotify = (u"""== แจ้งการปรับปรุงหน้า [[%(page)s]] อัตโนมัติโดยบอต ==
 บอตได้ทำการปรับปรุงหน้า [[%(page)s]] เรียบร้อยแล้ว """
 u"([{{fullurl:%(page)s|diff=cur&oldid=prev}} ดูการแก้ไข]) "
-u"โปรดตรวจสอบความถูกต้องของหน้าด้วย --~~~~")
+u"โปรดตรวจสอบความถูกต้องของหน้าด้วย")
 
 def checkparams(params):
     # NotImplemented
@@ -75,7 +76,7 @@ def process(text):
         error("something wrong")
         return
 
-    if params["page"] != u"แม่แบบ:กล่องผู้ใช้":
+    if "disable" in params:
         return
 
     page = wp.Page(params["page"])
@@ -87,7 +88,8 @@ def process(text):
     for i, sfind in enumerate(params["find"]):
         newtext = text.replace(parse(sfind), parse(params["replace"][i]))
         if newtext == text:
-            errorlist.append(("replace", i + 1))
+            errorlist.append("คำเตือน: ไม่เกิดการแทนที่ข้อความที่ %d" %
+                            (i + 1))
         text = newtext
 
     def matchbrace(s, i):
@@ -97,6 +99,7 @@ def process(text):
             elif s[i] == "}": lv -= 1
             if lv == 0:
                 return i
+                # not return i + 1 to avoid index out of range
 
     for irep, sp in enumerate(params["param"]):
         lst = []
@@ -121,21 +124,23 @@ def process(text):
             out.append(text[i])
         newtext = "".join(out)
         if newtext == text:
-            errorlist.append(("param", irep + 1))
+            errorlist.append("คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ %d" %
+                            (irep + 1))
         text = newtext
 
     #=======
 
     if text == page.get():
-        pywikibot.output(u"ไม่มีการเปลี่ยนแปลงในหน้า %s; ยกเลิกการปรับปรุงและแจ้งเตือน" %
-                        source.title())
-        return False
-    else:
-        pywikibot.showDiff(page.get(), text)
+        pywikibot.output(u"ไม่มีการเปลี่ยนแปลงในหน้า %s; "
+                         u"ยกเลิกการปรับปรุงและแจ้งเตือน" % source.title())
+        return
 
     if debug:
-        print text
+        pywikibot.showDiff(page.get(), text)
         return
+
+    global textnotify
+    textnotify += "\n" + "".join(map(lambda x: "* " + x + "\n", errorlist))
 
     if "sandbox" in params:
         page = wp.Page(page.title() + "/sandbox")
@@ -144,15 +149,13 @@ def process(text):
     pagenotify = wp.User(params["notifyuser"]).getUserTalkPage()
     pagenotify.put(pagenotify.get() + "\n\n" + textnotify % {
                                                 "page": page.title(),
-                                            },
+                                            } + "--~~~~",
                    u"แจ้งการปรับปรุงหน้าอัตโนมัติ", minorEdit=False)
-    return True
 
 def main():
     text = wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงหน้าอัตโนมัติ").get()
     for req in lre.pats["entry"].finditer(text):
         process(req.group(1))
-
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("updatePage")
