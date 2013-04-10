@@ -129,16 +129,16 @@ class CategoryMoveRobot:
             if self.oldCat.isEmptyCategory():
                 self.oldCat.delete(reason, prompt=False, mark=True)
                 if oldMovedTalk is not None:
-                    oldMovedTalk.delete(reason, prompt=False, mark=True)
+                    oldMovedTalk.delete(reason, prompt=False,
+                                        mark=True, blank=True)
             else:
                 pywikibot.output('Couldn\'t delete %s - not empty.'
                                  % self.oldCat.title())
 
 def glob():
-    global patName, patEndTable, patTagDel
+    global patName, patEndTable
     patName = lre.lre(ur"(?<=:)(?!.*:).*(?=\]\])")
     patEndTable = lre.lre(ur"(?m)^\|\}")
-    patTagDel = lre.lre(ur"(?s)\{\{speedydelete.*?\}\}")
 
 def summaryWithTime():
     return conf.summary + u" @ " + wp.getTime()
@@ -154,13 +154,6 @@ def domove(source, dest):
     pywikibot.output(u"Move from " + source + u" to " + dest)
     robot = CategoryMoveRobot(source, dest)
     robot.run()
-    pageCat = wp.Page("Category:" + source)
-    if pageCat.exists():
-        content = pageCat.get()
-        res = patTagDel.find(content)
-        if res:
-            pageCat.put(u"{{bots|allow=" + wp.conf.botname + "}}\n" + res,
-                        conf.summary)
 
 def verify(name):
     """Verify a username whether he is reliable."""

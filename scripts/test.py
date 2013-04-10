@@ -12,9 +12,8 @@ def glob():
     pass
 
 def main():
-    mainpage = wp.Page("Template:Documentation subpage")
-    print mainpage.getOldVersion(4848346)
-    #for page in mainpage.embeddedin(content=True):
+    page = wp.Page(u"วิกิพีเดีย:ทดลองเขียน")
+    page.delete(reason="abcdef", prompt=False, mark=True)
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")

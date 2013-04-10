@@ -28,9 +28,7 @@ def init():
     sys.path.append(simplifypath(conf.conf.pywikibotDir))
     sys.path.append(simplifypath(conf.conf.pywikibotDir, "externals/httplib2"))
 
-    patchPath = simplifypath(os.environ["WPROBOT_DIR"], "patch")
-    for f in os.listdir(patchPath):
-        execfile(os.path.join(patchPath, f))
+    import patch
 
     if __name__ == "__main__":
         sys.argv.pop(0)
