@@ -27,11 +27,12 @@ function _runwp(){
         local optsrm="script user"
         COMPREPLY=( $(compgen -W "${optsrm}" -- ${cur}) )
         ;;
-    #"open")
-        #local files=$(for x in * ; do \
-                                echo ${x##*/} ; \
-                                done)
-        #_filedir
-        #;;
     esac
 } && complete -F _runwp runwp
+
+#"open")
+        #local files=$(for x in * ; do \
+                                #echo ${x##*/} ; \
+                                #done)
+        #_filedir
+        #;;
