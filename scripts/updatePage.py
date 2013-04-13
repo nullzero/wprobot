@@ -8,7 +8,7 @@ import sys
 import init
 import wp
 import pywikibot
-from wp import lre
+from wp import lre, lnotify
 
 debug = False
 
@@ -16,19 +16,6 @@ def glob():
     global translateKey, textnotify
     lre.pats["entry"] = lre.lre(ur"(?s)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*(.*?)\s*\}\}")
     lre.pats["param"] = lre.lre(r"\s*\|([^\|]*?)\s*(?=\|)")
-    lre.pats[""] = lre.lre(r"\n")
-
-    translateKey = {}
-    translateKey[u"หน้า"] = "page"
-    translateKey[u"ต้นทาง"] = "source"
-    translateKey[u"แจ้ง"] = "notifyuser"
-    translateKey[u"กระบะทราย"] = "sandbox"
-    translateKey[u"พัก"] = "disable"
-
-    textnotify = (u"""== แจ้งการปรับปรุงหน้า [[%(page)s]] อัตโนมัติโดยบอต ==
-บอตได้ทำการปรับปรุงหน้า [[%(page)s]] เรียบร้อยแล้ว """
-u"([{{fullurl:%(page)s|diff=cur&oldid=prev}} ดูการแก้ไข]) "
-u"โปรดตรวจสอบความถูกต้องของหน้าด้วย")
 
 def checkparams(params):
     # NotImplemented
@@ -59,8 +46,8 @@ def process(text):
         key, dat = param.split("=", 1)
         key = key.strip()
         dat = dat.strip()
-        if key in translateKey:
-            params[translateKey[key]] = dat
+        if key in conf.translateKey:
+            params[conf.translateKey[key]] = dat
         elif key.startswith(conf.find):
             params["find"].append(dat)
         elif key.startswith(conf.replace):
@@ -88,7 +75,7 @@ def process(text):
     for i, sfind in enumerate(params["find"]):
         newtext = text.replace(parse(sfind), parse(params["replace"][i]))
         if newtext == text:
-            errorlist.append("คำเตือน: ไม่เกิดการแทนที่ข้อความที่ %d" %
+            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ %d" %
                             (i + 1))
         text = newtext
 
@@ -124,13 +111,13 @@ def process(text):
             out.append(text[i])
         newtext = "".join(out)
         if newtext == text:
-            errorlist.append("คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ %d" %
+            errorlist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ %d" %
                             (irep + 1))
         text = newtext
 
     #=======
 
-    if text == page.get():
+    if (not errorlist) and (text == page.get()):
         pywikibot.output(u"ไม่มีการเปลี่ยนแปลงในหน้า %s; "
                          u"ยกเลิกการปรับปรุงและแจ้งเตือน" % source.title())
         return
@@ -139,22 +126,19 @@ def process(text):
         pywikibot.showDiff(page.get(), text)
         return
 
-    global textnotify
-    textnotify += "\n" + "".join(map(lambda x: "* " + x + "\n", errorlist))
-
     if "sandbox" in params:
         page = wp.Page(page.title() + "/sandbox")
 
     page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
-    pagenotify = wp.User(params["notifyuser"]).getUserTalkPage()
-    pagenotify.put(pagenotify.get() + "\n\n" + textnotify % {
-                                                "page": page.title(),
-                                            } + "--~~~~",
-                   u"แจ้งการปรับปรุงหน้าอัตโนมัติ", minorEdit=False)
+
+    lnotify.notify("update-page",
+                   wp.User(params["notifyuser"]).getUserTalkPage(), {
+                        "page": page.title(),
+                        "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
+                   }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
 
 def main():
-    text = wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงหน้าอัตโนมัติ").get()
-    for req in lre.pats["entry"].finditer(text):
+    for req in lre.pats["entry"].finditer(wp.Page(conf.title).get()):
         process(req.group(1))
 
 if __name__ == "__main__":

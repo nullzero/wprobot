@@ -21,7 +21,7 @@ newuser(){
     cp templates/user-config.py tmp/$name
     nano tmp/$name
     if ! diff tmp/$name templates/user-config.py; then
-        mkdir bots/$botname
+        mkdir -p bots/$botname
         mv tmp/$name bots/$botname/user-config.py
     fi
 }

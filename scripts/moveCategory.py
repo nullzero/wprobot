@@ -64,7 +64,7 @@ def copyAndKeep(oldcat, catname):
 
         targetCat.put(oldcat.get(), u'โรบอต: ย้ายจาก %s. ผู้ร่วมเขียน: %s' %
                     (oldcat.title(), ', '.join(oldcat.contributingUsers())))
-                    
+
     item = pywikibot.ItemPage.fromPage(oldcat)
     testitem = pywikibot.ItemPage.fromPage(targetCat)
     if not testitem.exists() and item.exists():
@@ -114,9 +114,10 @@ class CategoryMoveRobot:
 
         def localchange(article, oldCat, newCat, comment):
             if ((not article.change_category(oldCat, newCat, comment)) and
-                     article.namespace in [10, 828]):
-                wp.Page(article.title() + "/doc").change_category(
-                        oldCat, newCat, comment)
+                     article.namespace() in [10, 828]):
+                pagedoc = wp.Page(article.title() + "/doc")
+                if pagedoc.exists():
+                    pagedoc.change_category(oldCat, newCat, comment)
 
         for article in itertools.chain(self.oldCat.articles(),
                                        self.oldCat.subcategories()):
@@ -127,7 +128,8 @@ class CategoryMoveRobot:
         # Delete the old category and its moved talk page
         if copied:
             if self.oldCat.isEmptyCategory():
-                self.oldCat.delete(reason, prompt=False, mark=True)
+                self.oldCat.delete(reason, prompt=False,
+                                   mark=True, blank=True)
                 if oldMovedTalk is not None:
                     oldMovedTalk.delete(reason, prompt=False,
                                         mark=True, blank=True)

@@ -54,19 +54,13 @@ def notify(user, dic, insertDisamT, token):
     checkrefuse(lambda: conf.nonotifycat in usertalk.get())
 
     if checkrefuse.val:
-        notifyreport(u"\n\n" + dict2str(dic), token)
-        return
-
-    message = (insertDisamT.replace(conf.linkPlaceholder, dict2str(dic))
-                           .replace(conf.userPlaceholder, user.title())
-                           .replace(conf.datePlaceholder, "%d/%d" %
-                           (ltime.date.today().day, ltime.date.today().month)))
-
-    try:
-        usertalk.put(u"%s\n\n%s --~~~~" % (usertalk.get(), message),
-                    conf.summary, minorEdit=False, async=True)
-    except:
-        wp.error()
+        notifyreport("\n\n" + dict2str(dic), token)
+    else:
+        try:
+            lnotify.notify("dpl", usertalk, {"links": dict2str(dic)},
+                           conf.summary)
+        except:
+            wp.error()
 
     pywikibot.output(">>> done!")
 

@@ -11,3 +11,5 @@ sandboxPages = [u"วิกิพีเดีย:ทดลองเขียน"
                 u"วิกิพีเดีย:สอนการใช้งาน_(วิกิพีเดียลิงก์)/กระดาษทด"]
 # put the sandbox page in the first position,
 # then put other tutorial pages.
+
+notifyMessage = u"User:Nullzerobot/ข้อความ"

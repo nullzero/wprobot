@@ -6,8 +6,6 @@ Data structure library.
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
-import init
-
 class LimitedSortedList(object):
     """
     A data structure to store sorted data. Since only few elements at
