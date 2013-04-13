@@ -134,6 +134,7 @@ def main():
 
         now = site.getcurrenttime()
         revid = None
+        revtimestamp = None
 
         for rev in page.getVersionHistory(total=5000):
             ts = pywikibot.Timestamp.fromISOformat(rev[1])
@@ -146,7 +147,7 @@ def main():
         dic["oldlen"] = {}
         dic["oldlen"]["text"] = u"รุ่นเก่า"
 
-        if revid is None:
+        if revtimestamp is None:
             dic["oldlen"]["result"] = resgen(False)
             dic["oldlen"]["value"] = u"ไม่พบรุ่นเก่าภายในเวลา 14 วัน"
         else:
