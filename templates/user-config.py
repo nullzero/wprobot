@@ -3,16 +3,21 @@
 """
 Example
 -------
+family = 'Nullzerobot'
+usernames['wikipedia']['th'] = family      #  Wikipedia bot
+usernames['wikibooks']['th'] = family       # Wikibooks bot
+usernames['wikidata']['wikidata'] = family  # Wikidata  bot
+usernames['wikidata']['repo'] = u'demo'     # Wikidata  test
+usernames['i18n']['i18n'] = u'Nullzero'     # i18n      id
+usernames['test']['test'] = u'Nullzero'
+sysopnames['wikibooks']['th'] = u'Nullzero' # Wikibooks sysop
+sysopnames['wikipedia']['th'] = u'Nullzero' # Wikipedia sysop
+
+password_file = os.path.join(os.path.dirname(__file__), ".passwd")
+"""
+
 family = 'wikipedia'
 mylang = 'th'
-usernames['wikipedia']['th'] = u'Nullzerobot'
-usernames['i18n']['i18n'] = u'Nullzero'
-usernames['wikidata']['wikidata'] = u'Nullzerobot'
-usernames['wikidata']['repo'] = u'demo'
-usernames['wikibooks']['th'] = u'Nullzerobot'
-sysopnames['wikipedia']['th'] = u'Nullzero'
-sysopnames['wikibooks']['th'] = u'Nullzero'
-"""
 
 max_queue_size = -1
 minthrottle = 0
