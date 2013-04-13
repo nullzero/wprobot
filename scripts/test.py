@@ -14,7 +14,7 @@ def glob():
 
 def main():
     for i in xrange(10):
-        wp.Page(u"วิกิพีเดีย:ทดลองเขียน").put("abc" * i, "def")
+        wp.Page(u"วิกิพีเดีย:ทดลองเขียน").put("abc" * (i+10), "def")
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")
