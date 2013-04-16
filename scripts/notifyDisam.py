@@ -135,7 +135,7 @@ def main():
 
     signal.signal(signal.SIGUSR2, receive_signal)
 
-    prevday = ltime.date.today().day
+    prevday = ltime.dt.today().day
     for rev in lgenerator.recentchanges(site,
                                         showRedirects=False,
                                         changetype=["edit", "new"],
@@ -147,13 +147,13 @@ def main():
         except:
             wp.error()
 
-        if ((prevday != ltime.date.today().day) and
-                       (ltime.date.today().day % 3 == 1)):
+        if ((prevday != ltime.dt.today().day) and
+                       (ltime.dt.today().day % 3 == 1)):
             try:
                 flush()
             except:
                 wp.error()
-            prevday = ltime.date.today().day
+            prevday = ltime.dt.today().day
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("notify linking to disambigous page",

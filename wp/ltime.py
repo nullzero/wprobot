@@ -55,17 +55,5 @@ def getNumDay(year, month):
         
     return [0, 31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month]
 
-class date(datetime.date):
+class dt(datetime.datetime):
     """Date class"""
-
-def timestampdelta(ts, delta):
-    """Get timestamp and delta second. Return the result timestamp."""
-    ts = str(ts)
-    return datetime.datetime.fromtimestamp(time.mktime(
-                    datetime.datetime(int(ts[0:4]),
-                                      int(ts[4:6]),
-                                      int(ts[6:8]),
-                                      int(ts[8:10]),
-                                      int(ts[10:12]),
-                                      int(ts[12:14])).timetuple()) + delta
-                                        ).strftime("%Y%m%d%H%M%S")

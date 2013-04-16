@@ -9,6 +9,10 @@ import pywikibot
 from wp import ltime
 from pywikibot.data import api
 
+def glob():
+    global tdelta
+    tdelta = ltime.dt(1, 1, 1, 0, 0, 30) - ltime.dt(1, 1, 1, 0, 0, 0)
+
 def recentchanges(site, start=None, end=None, reverse=False,
                   namespaces=None, pagelist=None, changetype=None,
                   showMinor=None, showBot=None, showAnon=None,
@@ -98,4 +102,6 @@ def recentchanges(site, start=None, end=None, reverse=False,
             break
         
         time.sleep(24)
-        start = ltime.timestampdelta(site.getcurrenttimestamp(), -30)
+        start = site.getcurrenttimestamp() - tdelta
+
+glob()

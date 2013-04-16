@@ -37,7 +37,7 @@ def append(page, text, comment=u'', minorEdit=True, botflag=True,
            async=False, token=None):
     # TODO: async support
     if token is None:
-        token = page.site.token(page, "edit")
+        token = page.site.getToken("edit")
     r = api.Request(site=page.site,
                     action="edit",
                     title=page.title(),

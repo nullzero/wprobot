@@ -105,6 +105,7 @@ case "$mode" in
     ;;
 "setup")
     cp templates/bash_completion ~/.wprobotrc
+    source ~/.wprobotrc
     ;;
 *)
     error "เรียกใช้พารามิเตอร์ไม่ถูกต้อง"

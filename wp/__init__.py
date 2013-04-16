@@ -160,5 +160,11 @@ def User(title):
         site = pywikibot.getSite()
     return pywikibot.User(site, title)
 
+def Category(title):
+    global site
+    if not site:
+        site = pywikibot.getSite()
+    return pywikibot.Category(site, title)
+
 glob()
 onload()

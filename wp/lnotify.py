@@ -9,7 +9,7 @@ __author__ = "Sorawee Porncharoenwase"
 import random
 import init
 import wp
-from wp import lre
+from wp import lre, lapi
 
 def glob():
     lre.pats["subtl"] = lre.lre("\{\{\{(.*?)\}\}\}")
@@ -17,8 +17,8 @@ def glob():
 def notify(template, page, dic, summary, nocreate=True):
     text = None
     force = random.randint(0, 27) == 0
-    if hasattr(notify, "_template") or force:
-        if template in notify._template or force:
+    if force or hasattr(notify, "_template"):
+        if force or template in notify._template:
             text = notify._template[template]
     else:
         notify._template = {}
@@ -30,7 +30,7 @@ def notify(template, page, dic, summary, nocreate=True):
     process = lambda x: lre.pats["subtl"].sub(r"%(\1)s",
                         x.replace("<!---->", ""))
 
-    page.put(page.get() + "\n\n" + (process(text) % dic) + "--~~~~",
-             summary, minorEdit=False, async=True)
+    lapi.append(page, "\n\n" + (process(text) % dic) + "--~~~~", summary,
+                minorEdit=False)
 
 glob()

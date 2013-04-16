@@ -5,10 +5,11 @@ __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
 import sys
+import time
 import init
 import wp
 import pywikibot
-from wp import lre, lnotify
+from wp import lre, lnotify, lthread, ltime
 
 debug = False
 
@@ -16,6 +17,7 @@ def glob():
     global translateKey, textnotify
     lre.pats["entry"] = lre.lre(ur"(?s)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*(.*?)\s*\}\}")
     lre.pats["param"] = lre.lre(r"\s*\|([^\|]*?)\s*(?=\|)")
+    lre.pats["num"] = lre.lre(r"\d+$")
 
 def checkparams(params):
     # NotImplemented
@@ -30,7 +32,6 @@ def parse(text):
     if not (text[0] == '"' and text[-1] == '"'): error()
     return (text[1:-1].replace("\\\\", "<!-- B1acks1ash dummy -->\\"
                                        "<!-- B1acks1ash dummy -->")
-                      .replace('\\"', '"')
                       .replace("\\{", "{")
                       .replace("\\}", "}")
                       .replace("\\!", "|")
@@ -38,36 +39,45 @@ def parse(text):
             ).replace("<!-- B1acks1ash dummy -->", "")
 
 def process(text):
-    params = {"find": [], "replace": [], "param": [], "translate": []}
+    params = {"find": [],   "replace": [],
+              "param": [],  "translate": [],
+              "depr": [],   "rdepr": []}
     errorlist = []
+    deprecated = []
+    checkcat = []
     for param in lre.pats["param"].finditer(text + "|"):
         param = param.group(1)
-        pywikibot.output(param)
         key, dat = param.split("=", 1)
         key = key.strip()
         dat = dat.strip()
         if key in conf.translateKey:
             params[conf.translateKey[key]] = dat
-        elif key.startswith(conf.find):
-            params["find"].append(dat)
-        elif key.startswith(conf.replace):
-            params["replace"].append(dat)
-        elif key.startswith(conf.param):
-            params["param"].append(dat)
-        elif key.startswith(conf.translate):
-            params["translate"].append(dat)
         else:
-            error("unknown parameter", param)
+            key = lre.pats["num"].sub("", key)
+            dat = lre.pats["num"].sub("", dat)
+            if key in conf.seriesKey:
+                params[conf.seriesKey[key]].append(dat)
+            else:
+                error("unknown parameter", param)
 
     if not checkparams(params):
         error("something wrong")
         return
 
-    if "disable" in params:
+    if "disable" in params and params["disable"] == conf.yes:
         return
 
-    page = wp.Page(params["page"])
     source = wp.Page(params["source"])
+    page = wp.Page(params["page"])
+
+    if ("stable" in params and (ltime.dt.today() -
+                    pywikibot.Timestamp.fromISOformat(
+                    source.getVersionHistory(total=1)[0][1])).days <
+                    int(params["stable"])):
+        return
+
+    params["notifyuser"] = [x.strip() for x in params["notifyuser"].split(",")]
+
     text = source.get()
 
     #=======
@@ -115,6 +125,21 @@ def process(text):
                             (irep + 1))
         text = newtext
 
+    for i, sdepr in enumerate(params["depr"]):
+        category = wp.Category("Category:" + page.title().replace(":", "") +
+                               u"ที่ใช้พารามิเตอร์" + sdepr)
+        checkcat.append(category)
+        deprecated.append(u'<includeonly>{{#if:{{{%(depr)s|}}}|[[%(cat)s]]'
+                          u'<span class="error">พารามิเตอร์ %(depr)s '
+                          u'ล้าสมัยแล้ว โปรดใช้ %(rdepr)s แทนที่</span><br />'
+                          u'}}</includeonly>'
+            % {
+                "depr": sdepr,
+                "rdepr": params["rdepr"][i],
+                "cat": category.title(),
+            })
+    text = "".join(deprecated) + text
+
     #=======
 
     if (not errorlist) and (text == page.get()):
@@ -131,15 +156,25 @@ def process(text):
 
     page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
 
-    lnotify.notify("update-page",
-                   wp.User(params["notifyuser"]).getUserTalkPage(), {
-                        "page": page.title(),
-                        "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
-                   }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
+    time.sleep(30)
+    for cat in checkcat:
+        if cat.isEmptyCategory():
+            errorlist.append(u"[[:%s]] ว่างลงแล้ว "
+                             u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
+                             u"คุณอาจเขียนคู่มือการใช้งานใหม่"
+                             u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก" % cat.title())
+
+    for user in params["notifyuser"]:
+        lnotify.notify("update-page", wp.User(user).getUserTalkPage(), {
+                    "page": page.title(),
+                    "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
+                }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
 
 def main():
+    pool = lthread.ThreadPool(-1)
     for req in lre.pats["entry"].finditer(wp.Page(conf.title).get()):
-        process(req.group(1))
+        pool.add_task(process, req.group(1))
+    pool.wait_completion()
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("updatePage")
