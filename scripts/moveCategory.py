@@ -63,8 +63,7 @@ def copyAndKeep(oldcat, catname):
                         (oldcat.title(), targetCat.title()))
 
         targetCat.put(oldcat.get(), u'โรบอต: ย้ายจาก %s. ผู้ร่วมเขียน: %s' %
-                     (oldcat.title(), ', '.join(oldcat.contributingUsers())),
-                      botflag=True)
+                     (oldcat.title(), ', '.join(oldcat.contributingUsers())))
 
     item = pywikibot.ItemPage.fromPage(oldcat)
     testitem = pywikibot.ItemPage.fromPage(targetCat)
@@ -138,6 +137,7 @@ class CategoryMoveRobot:
             else:
                 pywikibot.output('Couldn\'t delete %s - not empty.'
                                  % self.oldCat.title())
+        site.login()
 
 def glob():
     lre.pats["name"] = lre.lre(r"\[\[:.*?:(.*?)\]\]")
@@ -171,7 +171,7 @@ def appendTable(title, arr):
         return
     page = wp.Page(title)
     page.put(lre.pats["endtable"].sub("\n".join(arr) + "\n|}", page.get()),
-             summaryWithTime(), botflag=True)
+             summaryWithTime())
 
 def main():
     """Main function"""
