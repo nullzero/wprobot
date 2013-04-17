@@ -15,9 +15,11 @@ debug = False
 
 def glob():
     global translateKey, textnotify
-    lre.pats["entry"] = lre.lre(ur"(?s)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*(.*?)\s*\}\}")
-    lre.pats["param"] = lre.lre(r"\s*\|([^\|]*?)\s*(?=\|)")
+    lre.pats["entry"] = lre.lre(ur"(?sm)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*"
+                                ur"((?:\{\{.*?\}\}|.)*?)\s*\}\}")
+    lre.pats["param"] = lre.lre(r"(?s)\|\s*((?:\{\{.*?\}\}|.)*?)\s*(?=\|)")
     lre.pats["num"] = lre.lre(r"\d+$")
+    lre.pats["user0"] = lre.lre(r"\{\{User0\|(.*?)\}\}")
 
 def checkparams(params):
     # NotImplemented
@@ -39,9 +41,9 @@ def parse(text):
             ).replace("<!-- B1acks1ash dummy -->", "")
 
 def process(text):
-    params = {"find": [],   "replace": [],
-              "param": [],  "translate": [],
-              "depr": [],   "rdepr": []}
+    params = {"find"  : [], "replace"   : [],
+              "param" : [], "translate" : [],
+              "depr"  : [], "rdepr"     : []}
     errorlist = []
     deprecated = []
     checkcat = []
@@ -76,8 +78,8 @@ def process(text):
                     int(params["stable"])):
         return
 
-    params["notifyuser"] = [x.strip() for x in params["notifyuser"].split(",")]
-
+    params["notifyuser"] = [lre.pats["user0"].find(x.strip(), 1)
+                            for x in params["notifyuser"].split("\n")]
     text = source.get()
 
     #=======
@@ -156,22 +158,32 @@ def process(text):
 
     page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
 
-    time.sleep(30)
-    for cat in checkcat:
-        if cat.isEmptyCategory():
-            errorlist.append(u"[[:%s]] ว่างลงแล้ว "
-                             u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
-                             u"คุณอาจเขียนคู่มือการใช้งานใหม่"
-                             u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก" % cat.title())
+    if checkcat:
+        time.sleep(30)
+        for cat in checkcat:
+            if cat.isEmptyCategory():
+                errorlist.append(u"[[:%s]] ว่างลงแล้ว "
+                                 u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
+                                 u"คุณอาจเขียนคู่มือการใช้งานใหม่"
+                                 u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก" %
+                                 cat.title())
 
     for user in params["notifyuser"]:
         lnotify.notify("update-page", wp.User(user).getUserTalkPage(), {
                     "page": page.title(),
                     "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
+                    "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if
+                                   page.namespace() == 828 else ""
                 }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
 
+def process0(text):
+    try:
+        process(text)
+    except:
+        wp.error()
+
 def main():
-    pool = lthread.ThreadPool(-1)
+    pool = lthread.ThreadPool(1)
     for req in lre.pats["entry"].finditer(wp.Page(conf.title).get()):
         pool.add_task(process, req.group(1))
     pool.wait_completion()

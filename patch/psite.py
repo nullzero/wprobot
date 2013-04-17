@@ -195,16 +195,18 @@ def _getToken(self, tokentype, force=False):
     @type force bool
 
     """
-    if (not force) and (tokentype in self._token):
-        return self._token[tokentype]
+    if (not force) and (tokentype in self._token) and (
+                  (ltime.dt.today() - self._token[tokentype][1]).seconds <
+                   2 * 60 * 60):
+        return self._token[tokentype][0]
 
     query = api.PropertyGenerator("info",
                                   titles="!",
                                   intoken=tokentype,
                                   site=self)
     for item in query:
-        self._token[tokentype] = item[tokentype + "token"]
-        return self._token[tokentype]
+        self._token[tokentype] = (item[tokentype + "token"], ltime.dt.today())
+        return self._token[tokentype][0]
 
 APISite.getToken = _getToken
 

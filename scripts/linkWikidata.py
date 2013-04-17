@@ -7,6 +7,7 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
+from wp import lthread
 
 def glob():
     global ensite
@@ -14,7 +15,7 @@ def glob():
 
 def main():
     def local(page):
-        print page.title()
+        pywikibot.output(wp.tostr(page.title()))
         enpage = pywikibot.Page(ensite, page.title(withNamespace=False),
                                 ns=page.namespace())
         item = pywikibot.ItemPage.fromPage(enpage)
@@ -26,7 +27,7 @@ def main():
                          'labels': {site.code: {'language': site.code,
                                                 'value': page.title()}}})
 
-    pool = lthread.ThreadPool(-1)
+    pool = lthread.ThreadPool(10)
     for page in site.allpages(namespace=10):
         pool.add_task(local, page)
     pool.wait_completion()

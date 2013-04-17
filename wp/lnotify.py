@@ -14,9 +14,9 @@ from wp import lre, lapi
 def glob():
     lre.pats["subtl"] = lre.lre("\{\{\{(.*?)\}\}\}")
 
-def notify(template, page, dic, summary, nocreate=True):
+def notify(template, page, dic, summary, nocreate=True, botflag=True):
     text = None
-    force = random.randint(0, 27) == 0
+    force = random.randint(0, 64) == 0
     if force or hasattr(notify, "_template"):
         if force or template in notify._template:
             text = notify._template[template]
@@ -31,6 +31,6 @@ def notify(template, page, dic, summary, nocreate=True):
                         x.replace("<!---->", ""))
 
     lapi.append(page, "\n\n" + (process(text) % dic) + "--~~~~", summary,
-                minorEdit=False)
+                minorEdit=False, botflag=botflag)
 
 glob()

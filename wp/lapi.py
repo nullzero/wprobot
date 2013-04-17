@@ -34,10 +34,9 @@ def extractLinkedPages(site, text, title=None, expand=False):
             for item in r.submit()['parse']['links']]
 
 def append(page, text, comment=u'', minorEdit=True, botflag=True,
-           async=False, token=None):
+           async=False):
     # TODO: async support
-    if token is None:
-        token = page.site.getToken("edit")
+    token = page.site.getToken("edit")
     r = api.Request(site=page.site,
                     action="edit",
                     title=page.title(),
