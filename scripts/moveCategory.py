@@ -127,6 +127,7 @@ class CategoryMoveRobot:
         pool.wait_completion()
         # Delete the old category and its moved talk page
         if copied:
+            time.sleep(5)
             if self.oldCat.isEmptyCategory():
                 self.oldCat.delete(reason, prompt=False,
                                    mark=True, blank=True)
@@ -138,9 +139,8 @@ class CategoryMoveRobot:
                                  % self.oldCat.title())
 
 def glob():
-    global patName, patEndTable
-    patName = lre.lre(ur"(?<=:)(?!.*:).*(?=\]\])")
-    patEndTable = lre.lre(ur"(?m)^\|\}")
+    lre.pats["name"] = lre.lre(r"\[\[:.*?:(.*?)\]\]")
+    lre.pats["endtable"] = lre.lre(ur"(?m)^\|\}")
 
 def summaryWithTime():
     return conf.summary + u" @ " + wp.getTime()
@@ -151,8 +151,8 @@ def domove(source, dest):
     it will tag speedydelete tag and clear content to prevent
     interwikibot add interwiki link wrongly.
     """
-    source = patName.find(source)
-    dest = patName.find(dest)
+    source = lre.pats["name"].find(source, 1)
+    dest = lre.pats["name"].find(dest, 1)
     pywikibot.output(u"Move from " + source + u" to " + dest)
     robot = CategoryMoveRobot(source, dest)
     robot.run()
@@ -169,7 +169,7 @@ def appendTable(title, arr):
     if not arr:
         return
     page = wp.Page(title)
-    page.put(patEndTable.sub("\n".join(arr) + "\n|}", page.get()),
+    page.put(lre.pats["endtable"].sub("\n".join(arr) + "\n|}", page.get()),
              summaryWithTime())
 
 def main():

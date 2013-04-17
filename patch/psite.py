@@ -2,6 +2,7 @@
 
 import init
 from pywikibot.site import *
+from wp import ltime
 
 _logger = "wiki.site"
 
