@@ -43,7 +43,7 @@ def _allusers(self, start="!", prefix="", group=None, onlyActive=False,
 APISite.allusers = _allusers
 
 #=======================================================================
-
+'''
 @must_be(group='user')
 def _editpage(self, page, summary, minor=True, notminor=False,
              bot=True, recreate=True, createonly=False, watch=None):
@@ -251,3 +251,4 @@ def ___init__(self, code, fam=None, user=None, sysop=None):
 APISite.__init__ = ___init__
 
 #=======================================================================
+'''

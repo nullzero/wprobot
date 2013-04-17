@@ -170,7 +170,7 @@ def appendTable(title, arr):
         return
     page = wp.Page(title)
     page.put(lre.pats["endtable"].sub("\n".join(arr) + "\n|}", page.get()),
-             summaryWithTime())
+             summaryWithTime(), botflag=True)
 
 def main():
     """Main function"""
