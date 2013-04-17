@@ -63,7 +63,8 @@ def copyAndKeep(oldcat, catname):
                         (oldcat.title(), targetCat.title()))
 
         targetCat.put(oldcat.get(), u'โรบอต: ย้ายจาก %s. ผู้ร่วมเขียน: %s' %
-                    (oldcat.title(), ', '.join(oldcat.contributingUsers())))
+                     (oldcat.title(), ', '.join(oldcat.contributingUsers())),
+                      botflag=True)
 
     item = pywikibot.ItemPage.fromPage(oldcat)
     testitem = pywikibot.ItemPage.fromPage(targetCat)
