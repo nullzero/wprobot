@@ -7,8 +7,6 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
-from wp import lapi
-import xml.etree.ElementTree as ET
 
 def glob():
     pass
