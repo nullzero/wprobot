@@ -31,6 +31,6 @@ def notify(template, page, dic, summary, nocreate=True, botflag=True):
                         x.replace("<!---->", ""))
 
     lapi.append(page, "\n\n" + (process(text) % dic) + "--~~~~", summary,
-                minorEdit=False, botflag=botflag)
+                minorEdit=False, botflag=botflag, nocreate=nocreate)
 
 glob()

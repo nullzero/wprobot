@@ -12,11 +12,15 @@ def glob():
     pass
 
 def main():
-    for ns in [x for x in range(1, 17, 2) if x not in [3, 5]]:
+    namespaces = [x for x in range(1, 17, 2) if x not in [3, 5]]
+    for ns in namespaces:
         gen = site.allpages(namespace=ns, filterredir=True)
         for i in gen:
-            print i.title()
+            pywikibot.output("deleting " + i.title())
             i.delete(reason=u"โรบอต: หน้าเปลี่ยนทางไม่จำเป็น", prompt=False)
+
+    for ns in namespaces:
+        gen = site.allpages(namespace=ns)
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("deleteRedir")

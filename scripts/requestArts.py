@@ -34,14 +34,12 @@ def getlink(page, lim, reqen=False):
         else:
             candidates.append((link.group(1), None))
     shuffle(candidates)
-    text = lapi.parse(site, "\n".join(
-                      ["* {{PAGESIZE:%s|R}}" % page[0] for page in candidates]))
+    pageexist = lapi.exist_bunch([page[0] for page in candidates], site)
     count = 0
     out = []
-    pagesize = patLI.findall(text)
     for i, link in enumerate(candidates):
         link, enlink = link
-        if int(pagesize[i]) == 0:
+        if not pageexist[i][0]:
             if enlink:
                 out.append(u"[[%s]][[%s|^]]" % (link, enlink))
             else:

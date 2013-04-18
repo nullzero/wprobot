@@ -19,16 +19,16 @@ def process(rev):
                                      "sysop" in user.groups()):
         return
     page = wp.Page(rev["title"])
-    print ">>>", page.title()
+    pywikibot.output(">>>" + page.title())
     text = page.get()
     for gen in site.deletedrevs(page, get_text=True):
         for rev in gen["revisions"]:
             ratio = difflib.SequenceMatcher(None, text, rev["*"]).ratio()
-            print "processing", rev["revid"], "; ratio", ratio
+            pywikibot.ouput("processing %s; ratio %f" % (rev["revid"], ratio))
             if ratio >= 0.9:
-                page.delete(reason=u"ทดสอบ: [[WP:CSD#ท9|ท9]]: สร้างหน้าที่เคยถูกลบใหม่",
+                page.delete(reason=u"[[WP:CSD#ท9|ท9]]: สร้างหน้าที่เคยถูกลบใหม่",
                             prompt=False)
-                print "deleted"
+                pywikibot.output("deleted")
 
                 lnotify.notify("t9", user.getUserTalkPage(), {
                                 }, u"สร้างหน้าที่เคยถูกลบ", nocreate=False,

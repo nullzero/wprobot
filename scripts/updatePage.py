@@ -14,7 +14,6 @@ from wp import lre, lnotify, lthread, ltime
 debug = False
 
 def glob():
-    global translateKey, textnotify
     lre.pats["entry"] = lre.lre(ur"(?sm)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*"
                                 ur"((?:\{\{.*?\}\}|.)*?)\s*\}\}")
     lre.pats["param"] = lre.lre(r"(?s)\|\s*((?:\{\{.*?\}\}|.)*?)\s*(?=\|)")
@@ -27,8 +26,9 @@ def checkparams(params):
 
 def error(e, desc=None):
     # NotImplemented
-    print "E:", e
-    if desc: print ">>> ", desc
+    pywikibot.output("E: " + e)
+    if desc:
+        pywikibot.output(">>> " + desc)
 
 def parse(text):
     if not (text[0] == '"' and text[-1] == '"'): error()
@@ -153,7 +153,7 @@ def process(text):
         pywikibot.showDiff(page.get(), text)
         return
 
-    if "sandbox" in params:
+    if "sandbox" in params and params["sandbox"] == conf.yes:
         page = wp.Page(page.title() + "/sandbox")
 
     page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
@@ -183,7 +183,7 @@ def process0(text):
         wp.error()
 
 def main():
-    pool = lthread.ThreadPool(1)
+    pool = lthread.ThreadPool(30)
     for req in lre.pats["entry"].finditer(wp.Page(conf.title).get()):
         pool.add_task(process, req.group(1))
     pool.wait_completion()
