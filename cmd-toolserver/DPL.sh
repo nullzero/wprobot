@@ -4,6 +4,6 @@
 #$ -l arch=*
 #$ -o /dev/null
 #$ -e /dev/null
-#$ -N notifyDisam
+#$ -N DPL
 
-/usr/bin/python $HOME/wprobot/scripts/notifyDisam.py -bot:Nullzerobot
+/usr/bin/python $HOME/wprobot/scripts/DPL.py -bot:Nullzerobot

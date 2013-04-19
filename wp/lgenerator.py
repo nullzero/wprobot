@@ -3,15 +3,10 @@
 __version__ = "1.0.2"
 __author__ = "Sorawee Porncharoenwase"
 
-import time
 import init
 import pywikibot
 from wp import ltime
 from pywikibot.data import api
-
-def glob():
-    global tdelta
-    tdelta = ltime.dt(1, 1, 1, 0, 0, 30) - ltime.dt(1, 1, 1, 0, 0, 0)
 
 def recentchanges(site, start=None, end=None, reverse=False,
                   namespaces=None, pagelist=None, changetype=None,
@@ -44,7 +39,7 @@ def recentchanges(site, start=None, end=None, reverse=False,
     """
     if repeat:
         reverse = True
-        start = start or site.getcurrenttimestamp()
+        start = start or site.getcurrenttime()
         
     seen = set()
     while True:
@@ -101,7 +96,5 @@ def recentchanges(site, start=None, end=None, reverse=False,
         if not repeat:
             break
         
-        time.sleep(24)
-        start = site.getcurrenttimestamp() - tdelta
-
-glob()
+        ltime.sleep(24)
+        start = site.getcurrenttime() - ltime.td(seconds=30)

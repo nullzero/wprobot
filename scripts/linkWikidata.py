@@ -15,7 +15,7 @@ def glob():
 
 def main():
     def local(page):
-        pywikibot.output(wp.tostr(page.title()))
+        pywikibot.output(">>> " + page.title())
         enpage = pywikibot.Page(ensite, page.title(withNamespace=False),
                                 ns=page.namespace())
         item = pywikibot.ItemPage.fromPage(enpage)

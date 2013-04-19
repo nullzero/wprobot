@@ -7,12 +7,13 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
+from wp import ltime
 
 def glob():
     pass
 
 def main():
-    pass
+    print ltime.dt(1901, 2, 3, 4, 5, 6).totimestampformat()
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")

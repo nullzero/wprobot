@@ -14,7 +14,8 @@ from wp import lre, lapi
 def glob():
     lre.pats["subtl"] = lre.lre("\{\{\{(.*?)\}\}\}")
 
-def notify(template, page, dic, summary, nocreate=True, botflag=True):
+def notify(template, page, dic, summary, nocreate=True,
+           botflag=True, async=False):
     text = None
     force = random.randint(0, 64) == 0
     if force or hasattr(notify, "_template"):

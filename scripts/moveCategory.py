@@ -34,13 +34,12 @@ Requirement:
 __version__ = "2.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
-import time
 import itertools
 import init
 import wp
 import pywikibot
 from pywikibot import pagegenerators
-from wp import lservice, lre, lthread
+from wp import lservice, lre, lthread, ltime
 from pywikibot import i18n
 
 """
@@ -127,7 +126,7 @@ class CategoryMoveRobot:
         pool.wait_completion()
         # Delete the old category and its moved talk page
         if copied:
-            time.sleep(5)
+            ltime.sleep(15)
             if self.oldCat.isEmptyCategory():
                 self.oldCat.delete(reason, prompt=False,
                                    mark=True, blank=True)
