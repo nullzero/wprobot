@@ -46,6 +46,7 @@ def service(page, confpage, operation, verify, summary, debug=False):
         histlist.append((version, page.getOldVersion(version[0])))
         if version[0] == lastrev:
             break
+
     hist = histlist
     hist.reverse()
     pywikibot.output("Processing %d revision(s)" % len(hist))
@@ -53,8 +54,12 @@ def service(page, confpage, operation, verify, summary, debug=False):
         oldv = hist[i][1]
         newv = hist[i + 1][1]
         usernew = hist[i + 1][0][2]
-        dummy, cold = lwikitable.wiki2table(oldv)
-        dummy, cnew = lwikitable.wiki2table(newv)
+        try:
+            dummy, cold = lwikitable.wiki2table(oldv)
+            dummy, cnew = lwikitable.wiki2table(newv)
+        except:
+            wp.error()
+            continue
         oldvc = set([wp.toutf(x) for x in cold])
         newvc = set([wp.toutf(x) for x in cnew])
         difference = [eval(x) for x in (newvc - oldvc)]

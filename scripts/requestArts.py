@@ -8,7 +8,7 @@ import init
 import wp
 import pywikibot
 from random import shuffle
-from wp import lre, lapi
+from wp import lre
 
 def glob():
     global paten, patWOen, patlink, patoldlink, dummytext, patLI
@@ -19,7 +19,6 @@ def glob():
     patWOen = lre.lre(prepat)
     paten = lre.lre(prepat + sufpat)
     dummytext = "<!-- dummy for putting -->"
-    patLI = lre.lre("(?<=<li>).*?(?=</li>)")
 
 def getlink(page, lim, reqen=False):
     """Extract article's title from link in given page."""
@@ -34,12 +33,13 @@ def getlink(page, lim, reqen=False):
         else:
             candidates.append((link.group(1), None))
     shuffle(candidates)
-    pageexist = lapi.exist_bunch([page[0] for page in candidates], site)
+    pageexist = site.pagesexist([wp.Page(page[0]) for page in candidates])
     count = 0
     out = []
     for i, link in enumerate(candidates):
         link, enlink = link
-        if not pageexist[i][0]:
+        print link, pageexist[i]
+        if not pageexist[i][1]:
             if enlink:
                 out.append(u"[[%s]][[%s|^]]" % (link, enlink))
             else:
@@ -52,10 +52,10 @@ def getlink(page, lim, reqen=False):
 def main():
     pagewrite = pywikibot.Page(site, conf.pagewrite)
     content = pagewrite.get()
-    numlinks = len(patlink.findall(content))
     s = []
-    s += getlink(conf.wpreq, numlinks // 2, reqen=True)
-    s += getlink(conf.wpvital, numlinks - (numlinks // 2), reqen=True)
+    s += getlink(conf.wpvital, 2, reqen=True)
+    s += getlink(conf.wpreq, 1, reqen=True)
+    s += getlink(conf.wpbio, 1, reqen=True)
     content = patoldlink.sub(dummytext + u"\n", content)
     content = content.replace(dummytext, u"\n".join(
                               map(lambda x: u"--> " + x + u" <!--", s)))

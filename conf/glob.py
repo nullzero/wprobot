@@ -13,3 +13,4 @@ sandboxPages = [u"วิกิพีเดีย:ทดลองเขียน"
 # then put other tutorial pages.
 
 notifyMessage = u"User:Nullzerobot/ข้อความ"
+nstl = [10, 828]

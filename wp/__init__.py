@@ -13,17 +13,13 @@ import sys
 import os
 import traceback
 import datetime
-import imp
 import pywikibot
-import pywikibot.site
 from pywikibot import config
 from conf import glob as conf
 
-def onload():
-    conf.botname = os.environ["WPROBOT_BOT"]
-
 def glob():
     global basescript, fullname, lockfile, site
+    conf.botname = os.environ["WPROBOT_BOT"]
     basescript = os.path.basename(sys.argv[0])
     fullname = None
     lockfile = None
@@ -55,12 +51,12 @@ def error(e=None):
     print traceback instead.
     """
     if e:
-        pywikibot.output(u"E: " + e)
+        pywikibot.output("E: " + e)
     else:
         exc = sys.exc_info()[0]
         if (exc == KeyboardInterrupt) or (exc == SystemExit):
             sys.exit()
-        pywikibot.output(u"E: " + toutf(traceback.format_exc()))
+        pywikibot.output("E: " + toutf(traceback.format_exc()))
 
 def getTime():
     """Print timestamp."""
@@ -77,12 +73,13 @@ def _login(namedict, sysop=False):
                     site.user() == site.username(sysop)):
                 site.login()
 
-def pre(name, lock=False, sites=None):
+def pre(name, lock=False, sites=[]):
     """
     Return argument list, site object, and configuration of the script.
     This function also handles default arguments, generates lockfile
     and halt the script if lockfile exists before.
     """
+    import imp
     global site
     args = pywikibot.handleArgs() # must be called before getSite()
     site = pywikibot.getSite()
@@ -92,19 +89,18 @@ def pre(name, lock=False, sites=None):
         _login(config.sysopnames, sysop=True)
     else:
         _login({site.family.name: {site.code: None}})
-        if sites:
-            for isite in sites:
-                _login({isite.family.name: {isite.code: None}})
+        for isite in sites:
+            _login({isite.family.name: {isite.code: None}})
 
     global fullname, lockfile
     pywikibot.handleArgs("-log")
     fullname = name
-    pywikibot.output(u"The script " + fullname + u". Start at " + getTime())
+    pywikibot.output(">>> " + fullname + " <<< Start # " + getTime())
     if lock:
         lockfile = simplifypath([os.environ["WPROBOT_DIR"], "tmp",
                                 basescript + ".lock"])
         if os.path.exists(lockfile):
-            error(u"Lockfile founds. Unable to execute the script.")
+            error("Lockfile found. Unable to execute the script.")
             pywikibot.stopme()
             sys.exit()
         open(lockfile, 'w').close()
@@ -126,9 +122,9 @@ def post(unlock=True):
         try:
             os.remove(lockfile)
         except OSError:
-            error(u"Unable to remove lockfile.")
+            error("Unable to remove lockfile.")
 
-    pywikibot.output(u"The script " + fullname + u". Stop at " + getTime())
+    pywikibot.output(">>> " + fullname + " <<< Stop # " + getTime())
     pywikibot.stopme()
     sys.exit()
 
@@ -167,4 +163,3 @@ def Category(title):
     return pywikibot.Category(site, title)
 
 glob()
-onload()

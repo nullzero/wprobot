@@ -15,11 +15,11 @@ def main():
     pass
 
 if __name__ == "__main__":
-    args, site, conf = preload.pre("example", lock=True)
+    args, site, conf = wp.pre("example", lock=True)
     try:
         glob()
         main()
     except:
-        preload.posterror()
+        wp.posterror()
     else:
-        preload.post()
+        wp.post()

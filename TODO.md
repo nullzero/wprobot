@@ -7,5 +7,3 @@
 + blockpageschecker
  1. support i18n
  1. look for template at /doc subpage first
-+ login
- 1. login all users which list in user-config.py

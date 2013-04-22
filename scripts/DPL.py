@@ -9,7 +9,7 @@ import init
 import difflib
 import wp
 import pywikibot
-from wp import ltime, lgenerator, lapi, lre
+from wp import ltime, lgenerator, lre
 from pywikibot.data import api
 
 def glob():
@@ -24,7 +24,7 @@ def dict2str(d):
         s += "".join(map(lambda x: u"* [[" + x + u"]]\n", d[title]))
     return s
 
-def notify(user, dic, insertDisamT, token):
+def notify(user, dic, insertDisamT):
     for title, linkset in dic.items():
         pagenow = wp.Page(title)
         if pagenow.exists():
@@ -54,7 +54,7 @@ def notify(user, dic, insertDisamT, token):
     checkrefuse(lambda: conf.nonotifycat in usertalk.get())
 
     if checkrefuse.val:
-        notifyreport("\n\n" + dict2str(dic), token)
+        notifyreport("\n\n" + dict2str(dic))
     else:
         try:
             lnotify.notify("dpl", usertalk, {"links": dict2str(dic)},
@@ -80,18 +80,17 @@ def flush():
     pywikibot.output("begin flushing")
     global container
     insertDisamT = wp.Page(conf.messageTemplate).get()
-    token = site.token(pagereport, "edit")
     for user in container:
         try:
-            notify(wp.User(user), container[user], insertDisamT, token)
+            notify(wp.User(user), container[user], insertDisamT)
         except:
             wp.error()
     container = {}
     pywikibot.output("end flushing")
 
-def notifyreport(s, token):
+def notifyreport(s):
     pywikibot.output("save report function!")
-    lapi.append(pagereport, s, conf.summary, token=token)
+    pagereport.append(s, conf.summary)
 
 def check(revision):
     title = revision["title"]
@@ -107,8 +106,8 @@ def check(revision):
     if site.getRedirectText(textold):
         textold = ""
 
-    addedlinks = (set(lapi.extractLinkedPages(site, textnew, title)) -
-                set(lapi.extractLinkedPages(site, textold, title)))
+    addedlinks = (set(site.pagelinks_by_text(textnew, title)) -
+                set(site.pagelinks_by_text(textold, title)))
     disamlinks = []
 
     for link in addedlinks:
@@ -136,12 +135,11 @@ def main():
     signal.signal(signal.SIGUSR2, receive_signal)
 
     prevday = ltime.dt.today().day
-    for rev in lgenerator.recentchanges(site,
-                                        showRedirects=False,
-                                        changetype=["edit", "new"],
-                                        showBot=False,
-                                        namespaces=conf.namespaces,
-                                        repeat=True):
+    for rev in site.recentchanges(showRedirects=False,
+                                  changetype=["edit", "new"],
+                                  showBot=False,
+                                  namespaces=conf.namespaces,
+                                  repeat=True):
         try:
             check(rev)
         except:
@@ -153,6 +151,7 @@ def main():
                 flush()
             except:
                 wp.error()
+
             prevday = ltime.dt.today().day
 
 if __name__ == "__main__":

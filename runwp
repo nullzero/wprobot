@@ -19,10 +19,17 @@ newuser(){
     (test -z "$botname") && error "โปรดระบุชื่อบอต"
     name=.$RANDOM
     cp templates/user-config.py tmp/$name
-    nano tmp/$name
-    if ! diff tmp/$name templates/user-config.py; then
+    cd tmp
+    sed -i 's%<!-- bot dir here -->%'`pwd`'%' $name
+    nano $name
+    cd ..
+    if ! diff tmp/$name templates/user-config.py &> /dev/null; then
+        echo "creating..."
         mkdir -p bots/$botname
         mv tmp/$name bots/$botname/user-config.py
+    else
+        echo "no change. aborting..."
+        rm tmp/$name
     fi
 }
 
@@ -53,6 +60,11 @@ run(){
     script="$1"
     shift
     python ./scripts/"$script" "$@" -bot:Nullzerobot
+}
+
+setup(){
+    cp templates/bash_completion ~/.wprobotrc
+    source ~/.wprobotrc
 }
 
 remove(){
@@ -104,8 +116,7 @@ case "$mode" in
     testscript
     ;;
 "setup")
-    cp templates/bash_completion ~/.wprobotrc
-    source ~/.wprobotrc
+    setup
     ;;
 *)
     error "เรียกใช้พารามิเตอร์ไม่ถูกต้อง"

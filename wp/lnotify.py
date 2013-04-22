@@ -9,7 +9,7 @@ __author__ = "Sorawee Porncharoenwase"
 import random
 import init
 import wp
-from wp import lre, lapi
+from wp import lre
 
 def glob():
     lre.pats["subtl"] = lre.lre("\{\{\{(.*?)\}\}\}")
@@ -31,7 +31,7 @@ def notify(template, page, dic, summary, nocreate=True,
     process = lambda x: lre.pats["subtl"].sub(r"%(\1)s",
                         x.replace("<!---->", ""))
 
-    lapi.append(page, "\n\n" + (process(text) % dic) + "--~~~~", summary,
+    page.append("\n\n" + (process(text) % dic) + "--~~~~", summary,
                 minorEdit=False, botflag=botflag, nocreate=nocreate)
 
 glob()

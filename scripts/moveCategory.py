@@ -38,7 +38,6 @@ import itertools
 import init
 import wp
 import pywikibot
-from pywikibot import pagegenerators
 from wp import lservice, lre, lthread, ltime
 from pywikibot import i18n
 
@@ -66,6 +65,8 @@ def copyAndKeep(oldcat, catname):
 
     item = pywikibot.ItemPage.fromPage(oldcat)
     testitem = pywikibot.ItemPage.fromPage(targetCat)
+    pywikibot.output("debug: oldcat %s and newcat %s" %
+                    (str(item.exists()), str(testitem.exists())))
     if not testitem.exists() and item.exists():
         item.editEntity({'sitelinks': {site.dbName(): {'site': site.dbName(),
                                                 'title': targetCat.title()}},
@@ -113,7 +114,7 @@ class CategoryMoveRobot:
 
         def localchange(article, oldCat, newCat, comment):
             if ((not article.change_category(oldCat, newCat, comment)) and
-                     article.namespace() in [10, 828]):
+                     article.namespace() in wp.conf.nstl):
                 pagedoc = wp.Page(article.title() + "/doc")
                 if pagedoc.exists():
                     pagedoc.change_category(oldCat, newCat, comment)
@@ -140,10 +141,11 @@ class CategoryMoveRobot:
 
 def glob():
     lre.pats["name"] = lre.lre(r"\[\[:.*?:(.*?)\]\]")
+    # strip namespace in order to i18n properly
     lre.pats["endtable"] = lre.lre(ur"(?m)^\|\}")
 
 def summaryWithTime():
-    return conf.summary + u" @ " + wp.getTime()
+    return conf.summary + " @ " + wp.getTime()
 
 def domove(source, dest):
     """
@@ -151,8 +153,6 @@ def domove(source, dest):
     it will tag speedydelete tag and clear content to prevent
     interwikibot add interwiki link wrongly.
     """
-    source = lre.pats["name"].find(source, 1)
-    dest = lre.pats["name"].find(dest, 1)
     pywikibot.output(u"Move from " + source + u" to " + dest)
     robot = CategoryMoveRobot(source, dest)
     robot.run()
@@ -194,16 +194,19 @@ def main():
     pending = []
 
     for i, line in enumerate(table):
-        putline = u"|-\n| " + u" || ".join(line)
+        putline = "|-\n| " + " || ".join(line)
         if (operation == "minor") or (not disable[i]):
             templateStat = conf.notDoneTemplate
+
             try:
-                domove(line[1], line[2])
+                domove(lre.pats["name"].find(line[1], 1),
+                       lre.pats["name"].find(line[2], 1))
             except:
                 wp.error()
             else:
                 templateStat = conf.doneTemplate
-            putline += u" || " + templateStat + u" " + wp.getTime()
+
+            putline += " || %s %s" % (templateStat, wp.getTime())
             report.append(putline)
         else:
             pending.append(putline)

@@ -2,29 +2,13 @@
 
 import init
 from pywikibot.site import *
-from wp import ltime
+import wp
+from wp import ltime, lre
 
 _logger = "wiki.site"
 
 #=======================================================================
-
-def _getRedirectText(self, text):
-    """
-    Return target of redirection. Since we obtain data from text, 
-    there's no need to worry about passing section.
-    """
-    if hasattr(self, "patRedir"):
-        m = self.patRedir.match(text)
-        if m:
-            return m.group(1)
-        else:
-            return False
-    else:
-        self.patRedir = self.redirectRegex()
-        return self.getRedirectText(text)
-
-APISite.getRedirectText = _getRedirectText
-
+# Support for onlyActive parameter
 #=======================================================================
 
 def _allusers(self, start="!", prefix="", group=None, onlyActive=False,
@@ -36,7 +20,7 @@ def _allusers(self, start="!", prefix="", group=None, onlyActive=False,
         augen.request["auprefix"] = prefix
     if group:
         augen.request["augroup"] = group
-    if onlyActive:
+    if onlyActive: # >>HERE<<
         augen.request["auactiveusers"] = ""
     return augen
 
@@ -252,3 +236,210 @@ APISite.__init__ = ___init__
 
 #=======================================================================
 '''
+
+########################################################################
+########################################################################
+########################################################################
+
+#=======================================================================
+# Support for finding whether the page is a redirect page from text
+#=======================================================================
+
+def _getRedirectText(self, text):
+    """
+    Return target of redirection. Since we obtain data from text,
+    there's no need to worry about passing section.
+    """
+    if "site_APISite_redir" in lre.pats:
+        m = lre.pats["site_APISite_redir"].match(text)
+        if m:
+            return m.group(1)
+        else:
+            return False
+    else:
+        lre.pats["site_APISite_redir"] = self.redirectRegex()
+        return self.getRedirectText(text)
+
+APISite.getRedirectText = _getRedirectText
+
+#=======================================================================
+# Support for finding whether pages exist
+#=======================================================================
+
+def _pagesexist(self, pages):
+    def local(arr):
+        text = self.parse("\n".join(
+               ["* {{PAGESIZE:%s|R}}" % page.title() for page in arr]))
+
+        for i, ps in enumerate(lre.pats["site_APISite_li"].findall(text)):
+            #print arr[i], ps
+            arr[i] = (arr[i], int(ps) != 0)
+
+        return arr
+
+    out = []
+    pywikibot.output("checking pages: %d pages" % len(pages))
+    while pages:
+        out += local(pages[-500:])[::-1]
+        del pages[-500:]
+    pywikibot.output("complete!")
+    return out[::-1]
+
+APISite.pagesexist = _pagesexist
+
+#=======================================================================
+# Support for parsing text
+#=======================================================================
+
+def _parse(self, text):
+    r = api.Request(site=self,
+                    action="parse",
+                    text=text)
+    try:
+        result = r.submit()
+    except:
+        wp.error()
+    else:
+        return result['parse']['text']['*']
+
+APISite.parse = _parse
+
+#=======================================================================
+# Support for finding links in text
+#=======================================================================
+
+def _pagelinks_by_text(self, text, title=None, expand=False):
+    """
+    This function extract lins.
+    """
+    if not expand:
+        links = []
+        for link in lre.pats["link"].finditer(text):
+            links.append("[[" + link.group("title") + "]]")
+        text = "".join(links)
+
+    r = api.Request(site=self,
+                    action="parse",
+                    text=text,
+                    prop="links")
+
+    if title:
+        r["title"] = title
+
+    try:
+        pages = [wp.Page(item['*'])
+                for item in r.submit()['parse']['links']]
+    except:
+        wp.error()
+        return []
+    else:
+        return pages
+
+APISite.pagelinks_by_text = _pagelinks_by_text
+
+#=======================================================================
+# recentchanges with repeat option
+#=======================================================================
+
+def _recentchanges(self, start=None, end=None, reverse=False,
+                  namespaces=None, pagelist=None, changetype=None,
+                  showMinor=None, showBot=None, showAnon=None,
+                  showRedirects=None, showPatrolled=None, topOnly=False,
+                  step=None, total=None, repeat=False):
+    """Iterate recent changes.
+
+    @param start: Timestamp to start listing from
+    @param end: Timestamp to end listing at
+    @param reverse: if True, start with oldest changes (default: newest)
+    @param pagelist: iterate changes to pages in this list only
+    @param pagelist: list of Pages
+    @param changetype: only iterate changes of this type ("edit" for
+        edits to existing pages, "new" for new pages, "log" for log
+        entries)
+    @param showMinor: if True, only list minor edits; if False (and not
+        None), only list non-minor edits
+    @param showBot: if True, only list bot edits; if False (and not
+        None), only list non-bot edits
+    @param showAnon: if True, only list anon edits; if False (and not
+        None), only list non-anon edits
+    @param showRedirects: if True, only list edits to redirect pages; if
+        False (and not None), only list edits to non-redirect pages
+    @param showPatrolled: if True, only list patrolled edits; if False
+        (and not None), only list non-patrolled edits
+    @param topOnly: if True, only list changes that are the latest revision
+        (default False)
+
+    """
+    if repeat:
+        reverse = True
+        start = start or self.getcurrenttime()
+
+    seen = set()
+    while True:
+        pywikibot.output("getting revisions...")
+        if start and end:
+            if reverse:
+                if end < start:
+                    raise Error(
+            "recentchanges: end must be later than start with reverse=True")
+            else:
+                if start < end:
+                    raise Error(
+            "recentchanges: start must be later than end with reverse=False")
+        rcgen = self._generator(api.ListGenerator, type_arg="recentchanges",
+                                rcprop="user|comment|timestamp|title|ids"
+                                       "|sizes|redirect|loginfo"
+                                       #"|sizes|redirect|patrolled|loginfo" - patrol rights needed
+                                       "|flags",
+                                namespaces=namespaces, step=step,
+                                total=total)
+        if start is not None:
+            rcgen.request["rcstart"] = str(start)
+        if end is not None:
+            rcgen.request["rcend"] = str(end)
+        if reverse:
+            rcgen.request["rcdir"] = "newer"
+        if pagelist:
+            if self.versionnumber() > 14:
+                pywikibot.warning(
+                    u"recentchanges: pagelist option is disabled; ignoring.")
+            else:
+                rcgen.request["rctitles"] = u"|".join(p.title(withSection=False)
+                                                      for p in pagelist)
+        if changetype:
+            rcgen.request["rctype"] = changetype
+        if topOnly:
+            rcgen.request["rctoponly"] = ""
+        filters = {'minor': showMinor,
+                   'bot': showBot,
+                   'anon': showAnon,
+                   'redirect': showRedirects,}
+                   #'patrolled': showPatrolled}
+        rcshow = []
+        for item in filters:
+            if filters[item] is not None:
+                rcshow.append(filters[item] and item or ("!"+item))
+        if rcshow:
+            rcgen.request["rcshow"] = "|".join(rcshow)
+
+        for ipage in rcgen:
+            if ipage['revid'] not in seen:
+                seen.add(ipage['revid'])
+                yield ipage
+
+        if not repeat:
+            break
+
+        ltime.sleep(60)
+        start = self.getcurrenttime() - ltime.td(seconds=72)
+
+APISite.recentchanges = _recentchanges
+
+########################################################################
+########################################################################
+########################################################################
+
+def glob():
+    lre.pats["site_APISite_li"] = lre.lre("(?<=<li>).*?(?=</li>)")
+
+glob()

@@ -1,3 +1,5 @@
-import psite
-import ppage
-import p__init__
+import __init___Timestamp
+import page_Category
+import page_Page
+import page_WikibasePage
+import site_APISite

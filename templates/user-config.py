@@ -13,13 +13,13 @@ usernames['test']['test'] = u'Nullzero'
 sysopnames['wikibooks']['th'] = u'Nullzero' # Wikibooks sysop
 sysopnames['wikipedia']['th'] = u'Nullzero' # Wikipedia sysop
 
-password_file = os.path.join(os.path.dirname(__file__), ".passwd")
-"""
+password_file = os.path.join(<!-- bot dir here -->, ".passwd")
 
 family = 'wikipedia'
 mylang = 'th'
+"""
 
-max_queue_size = -1
+max_queue_size = 30
 minthrottle = 0
 maxthrottle = 1
 put_throttle = 0

@@ -1,8 +1,14 @@
 # -*- coding: utf-8  -*-
 
 import init
+import wp
 from pywikibot.page import *
+from pywikibot.data import api
+from wp import ltime
 
+#=======================================================================
+# Change position of initializing revision dict in order to prevent
+# error when putting
 #=======================================================================
 
 def ___init__(self, source, title=u"", ns=0):
@@ -36,7 +42,7 @@ def ___init__(self, source, title=u"", ns=0):
     @type ns: int
 
     """
-    self._revisions = {}
+    self._revisions = {} # >>HERE<<
     if isinstance(source, pywikibot.site.BaseSite):
         self._link = Link(title, source=source, defaultNamespace=ns)
     elif isinstance(source, Page):
@@ -55,6 +61,8 @@ def ___init__(self, source, title=u"", ns=0):
 Page.__init__ = ___init__
 
 #=======================================================================
+# return status of completion
+#=======================================================================
 
 def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
                     inPlace=True):
@@ -67,7 +75,7 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
 
     sortKey: sortKey to use for the added category.
     Unused if newCat is None, or if inPlace=True
-    
+
     FIX: return True if succeed. Otherwise, return False.
     """
     #TODO: is inPlace necessary?
@@ -157,11 +165,13 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
             pywikibot.output(u"Saving page %s failed: %s"
                              % (self.title(asLink=True), error.message))
         else:
-            return True
+            return True # >>HERE<<
     return False
 
 Page.change_category = _change_category
 
+#=======================================================================
+# Support blank and mark parameter
 #=======================================================================
 
 def _delete(self, reason=None, prompt=True, throttle=None,
@@ -192,7 +202,7 @@ def _delete(self, reason=None, prompt=True, throttle=None,
         try:
             return self.site.deletepage(self, reason)
         except pywikibot.NoUsername, e:
-            if mark:
+            if mark: # >>HERE<<
                 text = self.get(get_redirect=True)
                 self.put(u'{{speedydelete|1=%s --~~~~|bot=yes}}\n\n%s' %
                         (reason, "" if blank else text), comment=reason)
@@ -202,3 +212,109 @@ def _delete(self, reason=None, prompt=True, throttle=None,
 Page.delete = _delete
 
 #=======================================================================
+# add onlyInclude in order to find including of explicitly category
+#=======================================================================
+
+def _categories(self, withSortKey=False, step=None, total=None,
+               content=False, onlyInclude=False):
+    """Iterate categories that the article is in.
+
+    @param withSortKey: if True, include the sort key in each Category.
+    @param step: limit each API call to this number of pages
+    @param total: iterate no more than this number of pages in total
+    @param content: if True, retrieve the content of the current version
+        of each category description page (default False)
+    @return: a generator that yields Category objects.
+
+    """
+    if onlyInclude: # >>HERE<<
+        return pywikibot.getCategoryLinks(self.get(), self.site)
+    else:
+        return self.site.pagecategories(self, withSortKey=withSortKey,
+                                    step=step, total=total, content=content)
+
+Page.categories = _categories
+
+########################################################################
+########################################################################
+########################################################################
+
+#=======================================================================
+# get other language page
+#=======================================================================
+
+def _getLang(self, site):
+    for link in self.langlinks():
+        if link.site == site:
+            return self.__class__(link.site, link.title)
+
+Page.getLang = _getLang
+
+#=======================================================================
+# append text to a page
+#=======================================================================
+
+def _append(self, text, comment="", minorEdit=True, botflag=True,
+           async=False, nocreate=True):
+    # TODO: async support
+    token = self.site.token(self, "edit")
+    #token = page.site.getToken("edit")
+    r = api.Request(site=self.site, action="edit", title=self.title(),
+                    appendtext=text, summary=comment, token=token)
+
+    if minorEdit:
+        r["minor"] = ""
+
+    if botflag:
+        r["bot"] = ""
+
+    if nocreate:
+        r["nocreate"] = ""
+
+    try:
+        r.submit()
+    except:
+        wp.error()
+
+Page.append = _append
+
+#=======================================================================
+# implement protect
+#=======================================================================
+
+def _protect(self, summary, locktype=None, duration=None, level=None):
+    if duration is None or isinstance(duration, basestring):
+        expiry = duration
+    else:
+        expiry = self.site.getcurrenttime() + ltime.td(**duration)
+    level = level or "sysop"
+    locktype = locktype or "edit"
+    try:
+        self.site.login(sysop=True)
+    except pywikibot.NoUsername, e:
+        raise NoUsername("protect: Unable to login as sysop (%s)"
+                    % e.__class__.__name__)
+    if not self.site.logged_in(sysop=True):
+        raise NoUsername("protect: Unable to login as sysop")
+    token = self.site.token(self, "protect")
+    self.site.lock_page(self)
+    req = api.Request(site=self.site, action="protect", token=token,
+                      title=self.title(withSection=False),
+                      reason=summary, protections=locktype+"="+level)
+    if expiry:
+        req["expiry"] = expiry
+    try:
+        result = req.submit()
+    except api.APIError, err:
+        errdata = {
+            'site': self.site,
+            'title': self.title(withSection=False),
+            'user': self.site.user(),
+        }
+        pywikibot.output(u"protect: error code '%s' received (%s)."
+                          % (err.code, unicode(errdata)))
+        raise
+    finally:
+        self.site.unlock_page(self)
+
+Page.protect = _protect
