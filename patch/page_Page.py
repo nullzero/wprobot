@@ -395,3 +395,19 @@ def _change_category2(self, oldCat, newCat, inPlace=False):
     self.remove_category(oldCat, inPlace)
     return True
 '''
+
+#=======================================================================
+# NEW: add_category
+#=======================================================================
+
+def _add_category(self, cats):
+    old = set(self.categories(onlyInclude=True))
+    new = set(cats)
+    if old | new == old:
+        pywikibot.output("Add category: Nothing change!")
+        return False
+    self.put(pywikibot.replaceCategoryLinks(self.get(), list(old | new), self.site),
+             u"เพิ่มหมวดหมู่")
+    return True
+
+Page.add_category = _add_category

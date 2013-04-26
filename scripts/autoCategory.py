@@ -10,46 +10,48 @@ from wp import lre, lthread, lservice
 def glob():
     global dummytext
     dummytext = "<!-- dummy -->"
-    lre.pats["maintaincat"] = lre.lre("[Aa]rticle|[Ss]tub|[Ww]ikipedia")
+    lre.pats["maintaincat"] = lre.lre("(?i)article|stub|wikipedia|without")
     lre.pats["name"] = lre.lre(r"\[\[:(.*?)\]\]")
     lre.pats["dummy"] = lre.lre(dummytext + r"\s*")
 
-def subthread(pagep, catinp, cat):
-    page = pagep.getLang(site)
+def subthread(pagep, catinp, cat, page):
     if not page:
-        print "Not found"
+        pywikibot.output(pagep.title() + " not found")
         return
     pywikibot.output("thread %s >>> adding..." % page.title())
     try:
         if page.namespace() not in wp.conf.nstl:
-            text = pywikibot.replaceCategoryLinks(page.get(),
-                   list((set(page.categories(onlyInclude=True)) -
-                         set([catinp])) | set([cat])), site)
-            if page.get() != text:
+            oldcat = set(page.categories(onlyInclude=True))
+            newcat = (oldcat - set([catinp])) | set([cat])
+            if oldcat != newcat:
                 pywikibot.output("Change!")
+                text = pywikibot.replaceCategoryLinks(page.get(), list(newcat),
+                                                      site)
                 page.put(text, u"autoCategory")
             else:
                 pywikibot.output("Nothing changes!")
     except:
         wp.error()
 
-def doCategory(pool, cat):
+def doCategory(pool, cat, catp):
     if not cat:
         return
-    cat = pywikibot.Category(cat) # to ensure that it is a Category object
-    pywikibot.output("processing %s:" % cat.title())
-    catp = cat.getLang(sitep)
     if not catp:
         return
+    pywikibot.output("processing: %s, %s" % (cat.title(), catp.title()))
+    cat = pywikibot.Category(cat) # to ensure that it is a Category object
+    catp = pywikibot.Category(catp)
     catinp = wp.Category(catp.title())
     if (cat.title(withNamespace=False) == catinp.title(withNamespace=False)):
         pywikibot.output("found English category: %s" %
                          catinp.title(withNamespace=False))
         return
-    for pagep in itertools.chain(catp.articles(), catp.subcategories()):
-        print pagep
-        if pagep.namespace() in [0, 10, 14]:
-            pool.add_task(subthread, pagep, catinp, cat)
+    pagesp = filter(lambda x: x.namespace() in [0, 10, 14],
+                    list(catp.articles(content=True)) +
+                    list(catp.subcategories(content=True)))
+    pages = site.getLang(pagesp)
+    for i, pagep in enumerate(pagesp):
+        pool.add_task(subthread, pagep, catinp, cat, pages[i])
 
 def importiw(A, B):
     datapage = pywikibot.ItemPage.fromPage(A)
@@ -100,11 +102,12 @@ def doall(title, titlep):
         missingcats = set()
         oldtext = ""
 
-    print ">>>", pagep
+    oldcats = set(missingcats)
+    catsp = list(pagep.categories(onlyInclude=True))
+    cats = site.getLang(catsp)
 
-    for catp in pagep.categories(onlyInclude=True):
-        print catp
-        if not catp.getLang(site):
+    for i, catp in enumerate(catsp):
+        if not cats[i]:
             missingcats.add(wp.Category(catp.title()))
 
     if page.namespace() not in wp.conf.nstl:
@@ -112,8 +115,8 @@ def doall(title, titlep):
     else:
         return NotImplementedError
 
-    if ((set(page.categories(onlyInclude=True)) != missingcats) and
-             text != oldtext) or text == "":
+    if (oldcats != missingcats) or (text == ""):
+        pywikibot.output(">>> add untranslated categories")
         page.put(text or dummytext, u"เพิ่มหมวดหมู่")
 
     data = pywikibot.ItemPage.fromPage(page)
@@ -131,12 +134,13 @@ def doall(title, titlep):
     pool = lthread.ThreadPool(10)
 
     if page.isCategory():
-        doCategory(pool, page)
+        doCategory(pool, page, pagep)
 
-    for catp in pagep.categories():
+    for i, catp in enumerate(catsp):
         pywikibot.output(catp.title())
-        if not lre.pats["maintaincat"].search(catp.title()):
-            doCategory(pool, catp.getLang(site))
+        if not lre.pats["maintaincat"].search(catp.title()) and cats[i]:
+            page.add_category([cats[i]])
+            doCategory(pool, cats[i], catp)
 
     pool.wait_completion()
 
@@ -157,7 +161,7 @@ def main():
                                               operation="major",
                                               verify=lambda x: True,
                                               summary=summaryWithTime,
-                                              debug=True,
+                                              #debug=True,
                                               )
 
     for line in table:
