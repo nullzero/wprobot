@@ -66,7 +66,7 @@ Page.__init__ = ___init__
 #=======================================================================
 
 def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
-                    inPlace=False):
+                    inPlace=True):
     """Remove page from oldCat and add it to newCat.
 
     oldCat and newCat should be Category objects.

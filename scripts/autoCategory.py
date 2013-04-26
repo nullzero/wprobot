@@ -17,6 +17,7 @@ def glob():
 def subthread(pagep, catinp, cat):
     page = pagep.getLang(site)
     if not page:
+        print "Not found"
         return
     pywikibot.output("thread %s >>> adding..." % page.title())
     try:
@@ -46,7 +47,9 @@ def doCategory(pool, cat):
                          catinp.title(withNamespace=False))
         return
     for pagep in itertools.chain(catp.articles(), catp.subcategories()):
-        pool.add_task(subthread, pagep, catinp, cat)
+        print pagep
+        if pagep.namespace() in [0, 10, 14]:
+            pool.add_task(subthread, pagep, catinp, cat)
 
 def importiw(A, B):
     datapage = pywikibot.ItemPage.fromPage(A)
@@ -99,11 +102,9 @@ def doall(title, titlep):
 
     print ">>>", pagep
 
-    changed = False
     for catp in pagep.categories(onlyInclude=True):
         print catp
         if not catp.getLang(site):
-            changed = True
             missingcats.add(wp.Category(catp.title()))
 
     if page.namespace() not in wp.conf.nstl:
@@ -111,7 +112,8 @@ def doall(title, titlep):
     else:
         return NotImplementedError
 
-    if (changed and text != oldtext) or text == "":
+    if ((set(page.categories(onlyInclude=True)) != missingcats) and
+             text != oldtext) or text == "":
         page.put(text or dummytext, u"เพิ่มหมวดหมู่")
 
     data = pywikibot.ItemPage.fromPage(page)
