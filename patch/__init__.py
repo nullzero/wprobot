@@ -1,5 +1,5 @@
 import __init___Timestamp
 import page_Category
 import page_Page
-import page_WikibasePage
+import site_DataSite
 import site_APISite

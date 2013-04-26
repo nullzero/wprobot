@@ -5,6 +5,7 @@ import wp
 from pywikibot.page import *
 from pywikibot.data import api
 from wp import ltime
+from wp import lre
 
 #=======================================================================
 # Change position of initializing revision dict in order to prevent
@@ -65,7 +66,7 @@ Page.__init__ = ___init__
 #=======================================================================
 
 def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
-                    inPlace=True):
+                    inPlace=False):
     """Remove page from oldCat and add it to newCat.
 
     oldCat and newCat should be Category objects.
@@ -86,7 +87,7 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
         pywikibot.output(u"Can't edit %s, skipping it..."
                           % self.title(asLink=True))
         return False
-    if inPlace == True:
+    if inPlace or self.namespace() in wp.conf.nstl:
         newtext = pywikibot.replaceCategoryInPlace(self.text,
                                                    oldCat, newCat)
         if newtext == self.text:
@@ -121,7 +122,7 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
     # and remove duplicates.
     newCatList = []
     newCatSet = set()
-    cats = list(self.categories(get_redirect=True))
+    cats = list(self.categories(onlyInclude=True))
     for i in range(len(cats)):
         cat = cats[i]
         if cat == oldCat:
@@ -130,7 +131,7 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
                 sortKey = cat.sortKey
             if newCat:
                 if newCat.title() not in newCatSet:
-                    newCategory = Category(site, newCat.title(),
+                    newCategory = pywikibot.Category(site, newCat.title(),
                                            sortKey=sortKey)
                     newCatSet.add(newCat.title())
                     newCatList.append(newCategory)
@@ -240,18 +241,22 @@ Page.categories = _categories
 ########################################################################
 
 #=======================================================================
-# get other language page
+# NEW: getLang
 #=======================================================================
 
 def _getLang(self, site):
     for link in self.langlinks():
         if link.site == site:
-            return self.__class__(link.site, link.title)
+            if self.__class__ == pywikibot.Page:
+                return self.__class__(link.site, link.title, ns=link.namespace)
+            else:
+                return self.__class__(link.site, link.title)
+            # To support inheritance class
 
 Page.getLang = _getLang
 
 #=======================================================================
-# append text to a page
+# NEW: append
 #=======================================================================
 
 def _append(self, text, comment="", minorEdit=True, botflag=True,
@@ -279,7 +284,7 @@ def _append(self, text, comment="", minorEdit=True, botflag=True,
 Page.append = _append
 
 #=======================================================================
-# implement protect
+# NEW: protect
 #=======================================================================
 
 def _protect(self, summary, locktype=None, duration=None, level=None):
@@ -318,3 +323,75 @@ def _protect(self, summary, locktype=None, duration=None, level=None):
         self.site.unlock_page(self)
 
 Page.protect = _protect
+
+'''
+#=======================================================================
+# NEW: _helper
+#=======================================================================
+
+def _helper(page, data, inPlace, noInclude=False):
+    def multiline(arr):
+        return "\n".join(["[[" + i.title() + "]]" for i in arr])
+
+    if not inPlace:
+        page.text = pywikibot.replaceCategoryLinks(page.text, data)
+        return
+
+    if noInclude:
+        if "<noinclude>" in page.text:
+            page.text = lre.sub_last("<noinclude>", "<noinclude>\n" +
+                                     multiline(data), page.text)
+        else:
+            page.text += "<noinclude>\n" + multiline(data) + "\n</noinclude>"
+        return
+
+    lre.pats["cat"] = (lre.lre(r"(?i)\[\[\s*(%s)\s*:.*?\]\]" %
+                       "|".join(page.site.category_namespaces())))
+
+
+
+#=======================================================================
+# NEW: add_category
+#=======================================================================
+
+def _add_category(self, cats, inPlace=False):
+    inPlace = inPlace or (self.namespace() in wp.conf.nstl)
+    old = set(self.categories(onlyInclude=True))
+    new = set(cats)
+    if old + new == old:
+        pywikibot.output("Add category: Nothing change!")
+        return False
+    _helper(self, list(old + new), inPlace, len(old) == 0)
+    return True
+
+#=======================================================================
+# remove_category
+#=======================================================================
+
+def _remove_category(self, cats, inPlace=False):
+    inPlace = inPlace or (self.namespace() in wp.conf.nstl)
+    old = set(self.categories(onlyInclude=True))
+    new = set(cats)
+    if old - new == old:
+        pywikibot.output("Remove category: Nothing change!")
+        return False
+    _helper(self, list(old - new), inPlace)
+    return True
+
+#=======================================================================
+# change_category
+#=======================================================================
+
+def _change_category2(self, oldCat, newCat, inPlace=False):
+    inPlace = inPlace or (self.namespace() in wp.conf.nstl)
+    if oldCat == newCat:
+        pywikibot.output("Change category: Nothing change!")
+        return False
+    old = set(self.categories(onlyInclude=True))
+    if oldCat not in old:
+        pywikibot.output("Change category: Nothing change!")
+        return False
+    self.add_category(newCat, inPlace)
+    self.remove_category(oldCat, inPlace)
+    return True
+'''

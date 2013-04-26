@@ -13,7 +13,8 @@ def glob():
     pass
 
 def main():
-    pass
+    page = wp.Page(wp.conf.sandboxPages[0])
+    page.change_category(wp.Category("abcdef"), wp.Category("qwerty"), inPlace=True)
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")

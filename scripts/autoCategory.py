@@ -8,7 +8,7 @@ import pywikibot
 from wp import lre, lthread, lservice
 
 def glob():
-    global sitep, dummytext
+    global dummytext
     dummytext = "<!-- dummy -->"
     lre.pats["maintaincat"] = lre.lre("[Aa]rticle|[Ss]tub|[Ww]ikipedia")
     lre.pats["name"] = lre.lre(r"\[\[:(.*?)\]\]")
@@ -29,8 +29,6 @@ def subthread(pagep, catinp, cat):
                 page.put(text, u"autoCategory")
             else:
                 pywikibot.output("Nothing changes!")
-        else:
-
     except:
         wp.error()
 
@@ -86,7 +84,7 @@ def doall(title, titlep):
     pywikibot.output("autoCategory: %s, %s" % (title, titlep))
     page = wp.Page(title)
     if not titlep:
-        pagep = page.getLang(sitep)
+        pagep = page.getLang(pywikibot.getSite("en"))
     else:
         pagep = wp.Page(titlep)
 
@@ -99,8 +97,13 @@ def doall(title, titlep):
         missingcats = set()
         oldtext = ""
 
+    print ">>>", pagep
+
+    changed = False
     for catp in pagep.categories(onlyInclude=True):
+        print catp
         if not catp.getLang(site):
+            changed = True
             missingcats.add(wp.Category(catp.title()))
 
     if page.namespace() not in wp.conf.nstl:
@@ -108,7 +111,7 @@ def doall(title, titlep):
     else:
         return NotImplementedError
 
-    if text != oldtext or text == "":
+    if (changed and text != oldtext) or text == "":
         page.put(text or dummytext, u"เพิ่มหมวดหมู่")
 
     data = pywikibot.ItemPage.fromPage(page)

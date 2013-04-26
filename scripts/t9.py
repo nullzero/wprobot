@@ -13,14 +13,14 @@ from wp import lnotify, lre
 def glob():
     lre.pats["stripcomment"] = lre.lre(u"(?s):?\s*เนื้อหาเดิม.*")
 
-def process(rev):
-    user = wp.User(rev["user"])
+def process(pagenow, page, user):
+    if page is None:
+        page = pagenow
     if (user.editCount() >= 5000 and "autoconfirmed" in user.groups()) or (
                                      "sysop" in user.groups()):
         return
-    page = wp.Page(rev["title"])
-    pywikibot.output(">>> " + page.title())
-    text = page.get()
+    pywikibot.output(">>> " + pagenow.title() + " " + page.title())
+    text = pagenow.get()
     ts = None
     for gen in site.deletedrevs(page, get_text=True, reverse=True):
         for rev in gen["revisions"]:
@@ -37,7 +37,7 @@ def process(rev):
     cntdel = 0
     first = True
     deletion = None
-    for dl in site.logevents("delete", page=page, reverse=True):
+    for dl in site.logevents("delete", page=pagenow, reverse=True):
         cntdel += 1
         if dl.timestamp() > ts:
             if first:
@@ -50,16 +50,18 @@ def process(rev):
 
     reason = lre.pats["stripcomment"].sub("", deletion.comment()).strip()
 
-    page.delete(reason=u"โรบอต: %s" %
-                (reason or u"[[WP:CSD#ท9|ท9]]: สร้างหน้าที่เคยถูกลบใหม่"),
-                prompt=False)
+    pagenow.delete(reason=u"โรบอต: %s" %
+                  (reason or u"[[WP:CSD#ท9|ท9]]: สร้างหน้าที่เคยถูกลบใหม่"),
+                  prompt=False)
 
     pywikibot.output("deleted")
     site.login()
 
     lnotify.notify("t9", user.getUserTalkPage(), {
-                        "page": page.title(),
+                        "page": pagenow.title(),
                         "date": ts.strftime("%d/%m/%y %H:%M (UTC)"),
+                        "pagefrom": "" if page == pagenow
+                                       else u"ของหน้า " + page.title(),
                         "admin": deletion.user(),
                         "reason": (u' "%s"' % reason if reason
                                                      else u"บางประการ"),
@@ -75,8 +77,11 @@ def process(rev):
         site.login()
 
 def main():
+    checkPage = None
     if args:
         page = wp.Page(wp.toutf(args[0]))
+        if len(args) > 1:
+            checkPage = wp.Page(wp.toutf(args[1]))
         dic = page.getVersionHistory(reverseOrder=True, total=1)
         gen = [{"user": dic[0][2], "title": page.title()}]
     else:
@@ -84,12 +89,12 @@ def main():
                                  showBot=False, namespaces=[0], repeat=True)
     for rev in gen:
         try:
-            process(rev)
+            process(wp.Page(rev["title"]), checkPage, wp.User(rev["user"]))
         except:
             wp.error()
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("T9 Deleter", lock=True)
+    args, site, conf = wp.pre("T9 Deleter")
     try:
         glob()
         main()
