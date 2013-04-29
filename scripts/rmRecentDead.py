@@ -20,7 +20,7 @@ def glob():
     datenow = site.getcurrenttime()
 
 def check(ts):
-    distance = (datenow - pywikibot.Timestamp.fromISOformat(ts)).days
+    distance = (datenow - ts).days
     pywikibot.output("distance = %d days" % distance)
     return distance >= conf.daylimit
 
@@ -28,13 +28,13 @@ def main():
     for page in template.embeddedin():
         pywikibot.output(u">>> %s" % page.title())
         history = page.fullVersionHistory()
-        oldversion = page.getOldVersion(history[0][0])
+        oldversion = history[0][3]
         erase, found = False, False
         for cntversion, version in enumerate(history):
             if cntversion == 0:
                  continue
             newversion = oldversion
-            oldversion = page.getOldVersion(version[0])
+            oldversion = version[3]
             if (lre.pats["tl"].search(newversion) and
                     (not lre.pats["tl"].search(oldversion))):
                 erase = check(history[cntversion - 1][1])

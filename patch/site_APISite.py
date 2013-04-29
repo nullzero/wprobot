@@ -4,6 +4,7 @@ import init
 from pywikibot.site import *
 import wp
 from wp import ltime, lre
+from pywikibot.tools import itergroup
 
 _logger = "wiki.site"
 
@@ -364,23 +365,14 @@ APISite.getRedirectText = _getRedirectText
 # Support for finding whether pages exist
 #=======================================================================
 
-def _pagesexist(self, pages):
-    def local(arr):
-        text = self.parse("\n".join(
-               ["* {{PAGESIZE:%s|R}}" % page.title() for page in arr]))
-
-        for i, ps in enumerate(lre.pats["site_APISite_li"].findall(text)):
-            arr[i] = (arr[i], int(ps) != 0)
-
-        return arr
-
+def _pagesexist(self, allpages):
     out = []
-    pywikibot.output("checking pages: %d pages" % len(pages))
-    while pages:
-        out += local(pages[-500:])[::-1]
-        del pages[-500:]
-    pywikibot.output("complete!")
-    return out[::-1]
+    for pages in itergroup(allpages, 500):
+        text = self.parse("\n".join(
+               ["* {{PAGESIZE:%s|R}}" % page.title() for page in pages]))
+        for i, ps in enumerate(lre.pats["site_APISite_li"].findall(text)):
+            out.append((pages[i], int(ps) != 0))
+    return out
 
 APISite.pagesexist = _pagesexist
 
@@ -438,7 +430,6 @@ def _pageslanglinks(self, pages, step=None, total=None):
     """Iterate all interlanguage links on page, yielding Link objects."""
     alllltitles = [page.title(withSection=False).encode(self.encoding())
                 for page in pages]
-    from pywikibot.tools import itergroup
     counter = 0
     arr = {}
     for lltitles in itergroup(alllltitles, 50):

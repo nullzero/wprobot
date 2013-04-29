@@ -38,22 +38,20 @@ def service(page, confpage, operation, verify, summary, debug=False):
     oldcontent = page.get()
     header, table = lwikitable.wiki2table(oldcontent)
     disable = [False] * len(table)
-    hist = page.getVersionHistory(total=100)
+    hist = page.fullVersionHistory(total=100)
     # There is no need to get all revisions, just 100 is fine.
-    histlist = []
 
-    for version in hist:
-        histlist.append((version, page.getOldVersion(version[0])))
+    for i, version in enumerate(hist):
         if version[0] == lastrev:
+            hist = hist[:i+1]
             break
 
-    hist = histlist
     hist.reverse()
     pywikibot.output("Processing %d revision(s)" % len(hist))
     for i in xrange(len(hist) - 1):
-        oldv = hist[i][1]
-        newv = hist[i + 1][1]
-        usernew = hist[i + 1][0][2]
+        oldv = hist[i][3]
+        newv = hist[i + 1][3]
+        usernew = hist[i + 1][2]
         try:
             dummy, cold = lwikitable.wiki2table(oldv)
             dummy, cnew = lwikitable.wiki2table(newv)

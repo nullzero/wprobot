@@ -13,7 +13,7 @@ def glob():
     pass
 
 def main():
-    print pywikibot.getLanguageLinks(1)
+    print wp.Page("A").getVersionHistory(total=5)
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")

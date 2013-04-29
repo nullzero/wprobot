@@ -14,7 +14,7 @@ ThaiBegin = u"\u0e01"
 ThaiEnd = u"\u0e5b"
 
 Thai = {
-    "Alphabet" : u"[%s-%s]" % (eval(repr(u"ก")), eval(repr(u"ฮ"))),
+    "Alphabet" : u"%s-%s" % (eval(repr(u"ก")), eval(repr(u"ฮ"))),
     "VowelFront" : u"เแโใไ",
     "VowelBack" : u"ะาๅ",
     "VowelUm" : u"ำ",

@@ -1,4 +1,4 @@
-import pywikibot
+import pywikibot.textlib
 
 def _getLanguageLinks(text, insite=None, pageLink="[[]]",
                      template_subpage=False):
@@ -55,4 +55,5 @@ def _getLanguageLinks(text, insite=None, pageLink="[[]]",
                 continue
     return result
 
-pywikibot.getLanguageLinks = _getLanguageLinks
+pywikibot.textlib.getLanguageLinks = _getLanguageLinks # Use inside textlib.py
+pywikibot.getLanguageLinks = _getLanguageLinks # Use outside textlib.py
