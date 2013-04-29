@@ -38,7 +38,6 @@ def getlink(page, lim, reqen=False):
     out = []
     for i, link in enumerate(candidates):
         link, enlink = link
-        print link, pageexist[i]
         if not pageexist[i][1]:
             if enlink:
                 out.append(u"[[%s]][[%s|^]]" % (link, enlink))
