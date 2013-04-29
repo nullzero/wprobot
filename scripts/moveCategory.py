@@ -189,7 +189,6 @@ def main():
                                               summary=summaryWithTime,
                                               #debug=True,
                                               )
-    return
 
     report = []
     pending = []
