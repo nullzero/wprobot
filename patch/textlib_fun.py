@@ -1,4 +1,5 @@
 import pywikibot.textlib
+from pywikibot.textlib import *
 
 def _getLanguageLinks(text, insite=None, pageLink="[[]]",
                      template_subpage=False):

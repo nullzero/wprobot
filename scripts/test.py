@@ -13,7 +13,9 @@ def glob():
     pass
 
 def main():
-    print wp.Page("A").getVersionHistory(total=5)
+    for i in site.recentchanges(showRedirects=False, repeat=True,
+                                start=site.getcurrenttime() - datetime.timedelta(seconds=600)):
+        print i
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")

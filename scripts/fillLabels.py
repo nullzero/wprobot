@@ -11,7 +11,7 @@ from wp import lre
 from pywikibot.tools import itergroup
 
 def glob():
-    lre.pats["rmdisam"] = lre.lre(ur"\s*\([^\(]*?\)\s*$")
+    lre.pats["rmdisam"] = lre.lre(ur"\s+\([^\(]*?\)\s*$")
     lre.pats["thai"] = lre.lre(u"[\u0e00-\u0e7f]")
 def transform(dic):
     out = {}
@@ -26,7 +26,7 @@ def main():
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
     wrongdisamitem = pywikibot.ItemPage(datasite, "Q4167410")
     descdisam = u"หน้าแก้ความกำกวมวิกิพีเดีย"
-    for pages in itergroup(site.allpages(filterredir=False), 500):
+    for pages in itergroup(site.allpages(filterredir=False, start=u"†"), 100):
     #for pages in itergroup([wp.Page(u".cg")], 50):
         dat = datasite.loadcontent({"sites": site.dbName(),
                                     "titles": "|".join([page.title()
@@ -45,6 +45,7 @@ def main():
             wrongdisam = None
             page = wp.Page(item.getSitelink(site))
             print "title:", page.title()
+            #if page.title() in [u"ซันนี (Sunny)", u"ซันนี (Sonny)"]: continue
             if u"(แก้ความกำกวม)" in page.title():
                 isdisamtitle = True
             if "p107" in data["claims"]:
@@ -91,12 +92,14 @@ def main():
                 print "skip! nothing to do"
                 continue
             print out
+            #always = True
+            #ans = "a"
             if not always: ans = raw_input("prompt: ")
             if ans == "a":
                 always = True
                 ans = "y"
             if ans != "y" and ans != "": continue
-            item.editEntity(out)
+            item.editEntity(out, bot=True)
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")
