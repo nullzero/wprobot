@@ -20,6 +20,7 @@ def fix(s):
 def main():
     for page in site.allpages(filterredir=False, content=True):
         #page = wp.Page(u"รายชื่อวัดในจังหวัดชัยนาท")
+        pywikibot.output(">>>" + page.title())
         text = fix(page.get())
         if page.get() != text:
             pywikibot.showDiff(page.get(), text)
