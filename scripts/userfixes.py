@@ -24,7 +24,11 @@ def main():
         text = fix(page.get())
         if page.get() != text:
             pywikibot.showDiff(page.get(), text)
-            page.put(text, u"โรบอต: แก้ไขคำผิด", async=True)
+            try:
+                page.put(text, u"โรบอต: แก้ไขคำผิด", async=True)
+            except:
+                wp.error()
+                pass
 
 if __name__ == "__main__":
     args, site, conf = wp.pre(u"user-fixes")
