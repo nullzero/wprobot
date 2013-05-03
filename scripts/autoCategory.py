@@ -140,7 +140,7 @@ def doall(title, titlep):
         pywikibot.output(catp.title())
         if not lre.pats["maintaincat"].search(catp.title()) and cats[i]:
             page.add_category([cats[i]])
-            doCategory(pool, cats[i], catp)
+            #doCategory(pool, cats[i], catp)
 
     pool.wait_completion()
 

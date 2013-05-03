@@ -70,7 +70,7 @@ def process(pagenow, page, user):
 
     pywikibot.output(u"had deleted for %d times" % cntdel)
     if cntdel >= 3:
-        page.protect(u"หน้าไม่ผ่านเกณฑ์ - ถูกลบหลายครั้งติดต่อกัน",
+        page.protect(u"โรบอต: หน้าไม่ผ่านเกณฑ์ - ถูกลบหลายครั้งติดต่อกัน",
                      locktype="create", duration={"days": 14},
                      level="sysop")
         pywikibot.output("protected")
