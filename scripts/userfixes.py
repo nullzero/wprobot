@@ -11,21 +11,24 @@ from wp import lre
 def glob():
     global subst
     subst = lre.subst()
-    subst.append((u"(?<!วัด)ทรง(เสวย|ประชวร|มีพระ|เป็นพระ|เสด็จ|บรรทม|ผนวช|ทอดพระเนตร|สวรรคต)", r"\1"))
-    subst.append((u"== *แหล่งอื่น *==", u"== แหล่งข้อมูลอื่น =="))
+    #subst.append((u"(?<!วัด)ทรง(เสวย|ประชวร|มีพระ|เป็นพระ|เสด็จ|บรรทม|ผนวช|ทอดพระเนตร|สวรรคต)", r"\1"))
+    #subst.append((u"== *แหล่งอื่น *==", u"== แหล่งข้อมูลอื่น =="))
+    subst.append((ur"\{\{\s*(babel|บาเบล)\s*\|", "{{#babel:"))
 
 def fix(s):
     return subst.process(s)
 
 def main():
-    for page in site.allpages(filterredir=False, content=True):
+    tl = wp.Page("Template:บาเบล")
+    #for page in site.allpages(filterredir=False, content=True):
+    for page in tl.embeddedin(content=True):
         #page = wp.Page(u"รายชื่อวัดในจังหวัดชัยนาท")
         pywikibot.output(">>>" + page.title())
         text = fix(page.get())
         if page.get() != text:
             pywikibot.showDiff(page.get(), text)
             try:
-                page.put(text, u"โรบอต: แก้ไขคำผิด", async=True)
+                page.put(text, u"โรบอต: ปรับปรุงแม่แบบ", async=True)
             except:
                 wp.error()
                 pass
