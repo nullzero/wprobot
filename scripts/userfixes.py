@@ -13,15 +13,17 @@ def glob():
     subst = lre.subst()
     #subst.append((u"(?<!วัด)ทรง(เสวย|ประชวร|มีพระ|เป็นพระ|เสด็จ|บรรทม|ผนวช|ทอดพระเนตร|สวรรคต)", r"\1"))
     #subst.append((u"== *แหล่งอื่น *==", u"== แหล่งข้อมูลอื่น =="))
-    subst.append((ur"\{\{\s*(babel|บาเบล)\s*\|", "{{#babel:"))
+    subst.append((ur"\{\{\s*([Bb]abel|บาเบล)\s*\|", "{{#babel:"))
 
 def fix(s):
     return subst.process(s)
 
 def main():
-    tl = wp.Page("Template:บาเบล")
+    tl = [wp.Page(u"ผู้ใช้:Girmitya"), wp.Page(u"ผู้ใช้:Thakurji")]
+    #tl = wp.Page(u"Template:บาเบล")
     #for page in site.allpages(filterredir=False, content=True):
-    for page in tl.embeddedin(content=True):
+    #for page in tl.embeddedin(content=True):
+    for page in tl:
         #page = wp.Page(u"รายชื่อวัดในจังหวัดชัยนาท")
         pywikibot.output(">>>" + page.title())
         text = fix(page.get())

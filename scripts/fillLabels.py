@@ -1,5 +1,5 @@
 # -*- coding: utf-8  -*-
-"""Test page"""
+"""Fill label!"""
 
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
@@ -13,6 +13,7 @@ from pywikibot.tools import itergroup
 def glob():
     lre.pats["rmdisam"] = lre.lre(ur"\s+\([^\(]*?\)\s*$")
     lre.pats["thai"] = lre.lre(u"[\u0e00-\u0e7f]")
+
 def transform(dic):
     out = {}
     for i in dic:
@@ -20,21 +21,19 @@ def transform(dic):
     return out
 
 def main():
-    always = False
     datasite = site.data_repository()
     disamitem = pywikibot.ItemPage(datasite, "Q11651459")
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
     wrongdisamitem = pywikibot.ItemPage(datasite, "Q4167410")
     descdisam = u"หน้าแก้ความกำกวมวิกิพีเดีย"
-    for pages in itergroup(site.allpages(filterredir=False, start=u"†"), 100):
-    #for pages in itergroup([wp.Page(u".cg")], 50):
+    for pages in itergroup(site.allpages(filterredir=False, start=u"ก"), 100):
         dat = datasite.loadcontent({"sites": site.dbName(),
                                     "titles": "|".join([page.title()
                                                         for page in pages])})
 
         for i, qitem in enumerate(dat):
             if not qitem.startswith("q"): continue
-            print "item:", qitem
+            pywikibot.output("item: " + qitem)
             item = pywikibot.ItemPage(datasite, qitem)
             item._content = dat[qitem]
             super(pywikibot.ItemPage, item).get() # For getting labels
@@ -44,7 +43,7 @@ def main():
             isdisamtitle = False
             wrongdisam = None
             page = wp.Page(item.getSitelink(site))
-            print "title:", page.title()
+            pywikibot.output("title: " + page.title())
             #if page.title() in [u"ซันนี (Sunny)", u"ซันนี (Sonny)"]: continue
             if u"(แก้ความกำกวม)" in page.title():
                 isdisamtitle = True
@@ -55,7 +54,7 @@ def main():
                     if claim.getTarget() == wrongdisamitem:
                         wrongdisam = claim
             if wrongdisam:
-                print "Wrong disam!"
+                pywikibot.output("wrong disam item :(")
                 claim.changeTarget(disamitem)
                 isdisam = True
             elif (isdisamtitle) and (not isdisam):
@@ -65,23 +64,17 @@ def main():
                 claim2.setTarget(thwikiitem)
                 item.addClaim(claim)
                 claim.addSource(claim2)
-                print "Just add claim!"
+                pywikibot.output("added claim!")
                 isdisam = True
             oldlabels = None
             if "th" in data["labels"]:
                 oldlabels = data["labels"]["th"]
             labels = lre.pats["rmdisam"].sub("", page.title())
             if not lre.pats["thai"].search(labels):
-                if "en" in data["labels"]:
-                    print "Old label:", oldlabels
-                    print "Eng label:", data["labels"]["en"]
-                    if data["labels"]["en"] != labels:
-                        ans = raw_input("Get info from en: ")
-                        if ans == "y" or ans == "":
-                            labels = data["labels"]["en"]
+                continue
             if labels != oldlabels:
-                print "Old label:", oldlabels
-                print "New label:", labels
+                pywikibot.output("old label: " + oldlabels)
+                pywikibot.output("new label: " + labels)
                 editdict["labels"] = labels
             if isdisam and (("th" in data["descriptions"] and
                             data["descriptions"]["th"] != descdisam) or
@@ -89,20 +82,12 @@ def main():
                 editdict["descriptions"] = descdisam
             out = transform(editdict)
             if not out:
-                print "skip! nothing to do"
+                pywikibot.output("skip! nothing to do")
                 continue
-            print out
-            #always = True
-            #ans = "a"
-            if not always: ans = raw_input("prompt: ")
-            if ans == "a":
-                always = True
-                ans = "y"
-            if ans != "y" and ans != "": continue
-            item.editEntity(out, bot=True)
+            item.editEntity(out)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("test")
+    args, site, conf = wp.pre("fill label")
     try:
         glob()
         main()
