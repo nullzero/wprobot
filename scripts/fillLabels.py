@@ -73,8 +73,8 @@ def main():
             if not lre.pats["thai"].search(labels):
                 continue
             if labels != oldlabels:
-                pywikibot.output("old label: " + oldlabels)
-                pywikibot.output("new label: " + labels)
+                pywikibot.output("old label: " + unicode(oldlabels))
+                pywikibot.output("new label: " + unicode(labels))
                 editdict["labels"] = labels
             if isdisam and (("th" in data["descriptions"] and
                             data["descriptions"]["th"] != descdisam) or
