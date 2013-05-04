@@ -13,6 +13,7 @@ from pywikibot.tools import itergroup
 def glob():
     lre.pats["rmdisam"] = lre.lre(ur"\s+\([^\(]*?\)\s*$")
     lre.pats["thai"] = lre.lre(u"[\u0e00-\u0e7f]")
+    lre.pats["exc"] = lre.lre("(?m)^\* *\[\[ *(.*?) *\]\] *$")
 
 def transform(dic):
     out = {}
@@ -21,6 +22,9 @@ def transform(dic):
     return out
 
 def main():
+    exlist = [exc.group(1) for exc in
+              lre.pats["exc"].finditer(
+              wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงชื่อฉลาก").get())]
     datasite = site.data_repository()
     disamitem = pywikibot.ItemPage(datasite, "Q11651459")
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
@@ -44,7 +48,8 @@ def main():
             wrongdisam = None
             page = wp.Page(item.getSitelink(site))
             pywikibot.output("title: " + page.title())
-            #if page.title() in [u"ซันนี (Sunny)", u"ซันนี (Sonny)"]: continue
+            if page.title() in exlist:
+                continue
             if u"(แก้ความกำกวม)" in page.title():
                 isdisamtitle = True
             if "p107" in data["claims"]:
