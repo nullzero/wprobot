@@ -4,6 +4,7 @@
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
 
+import itertools
 import init
 import wp
 import pywikibot
@@ -22,6 +23,9 @@ def transform(dic):
     return out
 
 def main():
+    gen = itertools.chain(site.allpages(filterredir=False, start=u"ก"),
+                          site.allpages(filterredir=False, start=u"ก",
+                                        namespace=14))
     exlist = [exc.group(1) for exc in
               lre.pats["exc"].finditer(
               wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงชื่อฉลาก").get())]
@@ -30,7 +34,7 @@ def main():
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
     wrongdisamitem = pywikibot.ItemPage(datasite, "Q4167410")
     descdisam = u"หน้าแก้ความกำกวมวิกิพีเดีย"
-    for pages in itergroup(site.allpages(filterredir=False, start=u"ก"), 100):
+    for pages in itergroup(gen, 100):
         dat = datasite.loadcontent({"sites": site.dbName(),
                                     "titles": "|".join([page.title()
                                                         for page in pages])})
