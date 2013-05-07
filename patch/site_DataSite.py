@@ -7,11 +7,13 @@ from pywikibot.site import *
 # Support creating of item
 #=======================================================================
 
-def _editEntity(self, identification, data, **kwargs):
+def _editEntity(self, identification, data, bot=True, **kwargs):
     if "id" in identification and identification["id"] == "-1":
         del identification["id"]
     params = dict(**identification)
     params['action'] = 'wbeditentity'
+    if bot:
+        params['bot'] = 1
     if 'baserevid' in kwargs and kwargs['baserevid']:
         params['baserevid'] = kwargs['baserevid']
     params['token'] = self.token(pywikibot.Page(self, u'Main Page'), 'edit')  # Use a dummy page

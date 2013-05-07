@@ -12,8 +12,9 @@ def glob():
     pass
 
 def main():
-    page = wp.Page(u"ก")
-    print page.get()
+    page = wp.Page(u"วิกิพีเดีย:วิกิสนเทศ/กระบะทราย")
+    item = pywikibot.ItemPage.fromPage(page)
+    item.editEntity({"labels": {"th": {"language": "th", "value": "123"}}})
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")
