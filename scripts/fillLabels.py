@@ -96,7 +96,7 @@ def main():
             item.editEntity(out)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("fill label")
+    args, site, conf = wp.pre("fill label", lock=True)
     try:
         glob()
         main()
