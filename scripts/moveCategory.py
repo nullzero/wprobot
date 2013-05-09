@@ -160,9 +160,9 @@ def domove(source, dest):
 def verify(name):
     """Verify a username whether he is reliable."""
     user = pywikibot.User(site, name)
-    return user.isRegistered() and (user.editCount() >= conf.minEditCount) and
+    return (user.isRegistered() and (user.editCount() >= conf.minEditCount) and
            (not user.isBlocked()) and ((user.registration() is None) or
-           (site.getcurrenttime() - user.registration()).days >= conf.minTime)
+           (site.getcurrenttime() - user.registration()).days >= conf.minTime))
 
 def appendTable(title, arr):
     """Append data to a table."""
