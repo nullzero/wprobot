@@ -18,7 +18,8 @@ def process(lst):
         if "/" in page.title():
             continue
         if not exist[i][0]:
-            page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)
+            if page.botMayEdit():
+                page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)
 
 def main():
     namespaces = [x for x in range(1, 16, 2) if x not in [3, 5]]
