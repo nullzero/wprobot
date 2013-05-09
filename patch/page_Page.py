@@ -287,11 +287,7 @@ Page.append = _append
 # NEW: protect
 #=======================================================================
 
-def _protect(self, summary, locktype=None, duration=None, level=None):
-    if duration is None or isinstance(duration, basestring):
-        expiry = duration
-    else:
-        expiry = self.site.getcurrenttime() + ltime.td(**duration)
+def _protect(self, summary, locktype=None, expiry=None, level=None):
     level = level or "sysop"
     locktype = locktype or "edit"
     try:

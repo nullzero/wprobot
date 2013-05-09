@@ -135,11 +135,10 @@ def main():
     signal.signal(signal.SIGUSR2, receive_signal)
 
     prevday = ltime.dt.today().day
-    for rev in site.recentchanges(showRedirects=False,
-                                  changetype=["edit", "new"],
-                                  showBot=False,
-                                  namespaces=conf.namespaces,
-                                  repeat=True):
+    for rev in lrepeat.repeat(site, site.recentchanges, lambda x: x["revid"],
+                              60, showRedirects=False, showBot=False,
+                              changetype=["edit", "new"],
+                              namespaces=conf.namespaces):
         try:
             check(rev)
         except:

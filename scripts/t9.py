@@ -71,7 +71,7 @@ def process(pagenow, page, user):
     pywikibot.output(u"had deleted for %d times" % cntdel)
     if cntdel >= 3:
         page.protect(u"โรบอต: หน้าไม่ผ่านเกณฑ์ - ถูกลบหลายครั้งติดต่อกัน",
-                     locktype="create", duration={"days": 14},
+                     locktype="create", expiry="14 days",
                      level="sysop")
         pywikibot.output("protected")
         site.login()
@@ -85,8 +85,9 @@ def main():
         dic = page.getVersionHistory(reverseOrder=True, total=1)
         gen = [{"user": dic[0][2], "title": page.title()}]
     else:
-        gen = site.recentchanges(showRedirects=False, changetype=["new"],
-                                 showBot=False, namespaces=[0], repeat=True)
+        gen = lrepeat.repeat(site, site.recentchanges, lambda x: x["revid"],
+                             60, showRedirects=False, changetype=["new"],
+                             showBot=False, namespaces=[0])
     for rev in gen:
         try:
             process(wp.Page(rev["title"]), checkPage, wp.User(rev["user"]))
