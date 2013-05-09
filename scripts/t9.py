@@ -8,7 +8,7 @@ import difflib
 import init
 import wp
 import pywikibot
-from wp import lnotify, lre
+from wp import lnotify, lre, lrepeat
 
 def glob():
     lre.pats["stripcomment"] = lre.lre(u"(?s):?\s*เนื้อหาเดิม.*")
