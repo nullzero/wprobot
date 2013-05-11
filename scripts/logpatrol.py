@@ -27,12 +27,11 @@ def main():
     start = site.getcurrenttime()
     while True:
         for i in config:
-            pywikibot.output("AbuseFilter #%s" % i)
             for ab in site.abuselog(reverse=True, abuseid=i, start=start):
                 if (ab["user"], ab["timestamp"]) in seen:
                     continue
                 seen.add((ab["user"], ab["timestamp"]))
-                pywikibot.output("%s\t\t%s\t\t%s" %
+                pywikibot.output("filter: %s\t\tuser: %s\t\ttime: %s" %
                             (i, ab["user"].ljust(16), ab["timestamp"]))
                 if ab["user"] not in user:
                     user[ab["user"]] = {}
@@ -46,15 +45,13 @@ def main():
                 pywikibot.output(list(deq))
                 if len(deq) >= config[i][1]:
                     pywikibot.output("Block!")
-                    if raw_input("...: ") != "y":
-                        continue
 
                     userobj = wp.User(ab["user"])
                     if userobj.isRegistered():
-                        userobj.block(u"ทดสอบโรบอต: ก่อกวน ดูปูมการละเมิด",
+                        userobj.block(u"โรบอต: ก่อกวน ดูปูมการละเมิด",
                                         expiry=config[i][2])
                     else:
-                        userobj.block(u"ทดสอบโรบอต: ก่อกวน ดูปูมการละเมิด",
+                        userobj.block(u"โรบอต: ก่อกวน ดูปูมการละเมิด",
                                         expiry="1 day")
                     deq.clear()
                     pagetalk = userobj.getUserTalkPage()

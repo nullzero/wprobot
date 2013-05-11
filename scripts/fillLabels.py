@@ -41,7 +41,6 @@ def main():
 
         for i, qitem in enumerate(dat):
             if not qitem.startswith("q"): continue
-            pywikibot.output("item: " + qitem)
             item = pywikibot.ItemPage(datasite, qitem)
             item._content = dat[qitem]
             super(pywikibot.ItemPage, item).get() # For getting labels
@@ -51,7 +50,6 @@ def main():
             isdisamtitle = False
             wrongdisam = None
             page = wp.Page(item.getSitelink(site))
-            pywikibot.output("title: " + page.title())
             if page.title() in exlist:
                 continue
             if u"(แก้ความกำกวม)" in page.title():
@@ -91,8 +89,9 @@ def main():
                 editdict["descriptions"] = descdisam
             out = transform(editdict)
             if not out:
-                pywikibot.output("skip! nothing to do")
                 continue
+            pywikibot.output("item: " + qitem)
+            pywikibot.output("title: " + page.title())
             item.editEntity(out)
 
 if __name__ == "__main__":

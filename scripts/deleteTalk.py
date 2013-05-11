@@ -14,12 +14,14 @@ def glob():
 def process(lst):
     exist = site.pagesexist([x.toggleTalkPage().title() for x in lst])
     for i, page in enumerate(lst):
-        pywikibot.output("checking " + page.title())
         if "/" in page.title():
             continue
         if not exist[i][0]:
             if page.botMayEdit():
+                pywikibot.output("deleting " + page.title())
                 page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)
+            else:
+                pywikibot.output("can't delete " + page.title())
 
 def main():
     namespaces = [x for x in range(1, 16, 2) if x not in [3, 5]]
