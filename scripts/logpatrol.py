@@ -11,9 +11,10 @@ from wp import ltime, lre
 from collections import deque
 
 def glob():
-    lre.pats["trim"] = r"\{\{test\d?\}\}\s*"
+    lre.pats["trim"] = lre.lre(r"\{\{test\d?\}\}\s*")
 
 def getconfig():
+    config = {}
     exec("\n".join(wp.Page(u"ผู้ใช้:Nullzerobot/ปูมการละเมิด").get()
                                                          .splitlines()[1:-1]))
     return config
@@ -22,7 +23,6 @@ def main():
     user = {}
     config = getconfig()
     pywikibot.output(config)
-    site.login(sysop=True)
     seen = set()
     start = site.getcurrenttime()
     while True:
@@ -55,9 +55,15 @@ def main():
                                         expiry="1 day")
                     deq.clear()
                     pagetalk = userobj.getUserTalkPage()
-                    pagetalk.put("{{test5}} --~~~~\n" +
-                                 lre.pats["trim"].sub("", pagetalk.get()),
-                                 u"โรบอต: แจ้งการถูกบล็อก")
+                    if pagetalk.exists():
+                        textput = conf.test5 + lre.pats["trim"].sub("",
+                                  pagetalk.get())
+                    else:
+                        textput = conf.test5
+                    pagetalk.put(textput, u"โรบอต: แจ้งการถูกบล็อก",
+                                 minorEdit=False, botflag=False)
+
+                site.login(sysop=True)
 
         ltime.sleep(60)
         start = max(start, site.getcurrenttime() - ltime.td(seconds=120))

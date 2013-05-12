@@ -26,24 +26,3 @@ def _editEntity(self, identification, data, bot=True, **kwargs):
     return data
 
 DataSite.editEntity = _editEntity
-
-def _abuselog(self, start=None, step=None, total=None, reverse=False,
-              abuseid=None
-             #prefix="", namespace=0, filterredir=None,
-             #filterlanglinks=None, minsize=None, maxsize=None,
-             #protect_type=None, protect_level=None,
-             #includeredirects=None, content=False):
-             ):
-    apgen = self._generator(api.ListGenerator, type_arg="abuselog",
-                            step=step, total=total)
-    if abuseid is not None:
-        apgen.request["aflfilter"] = abuseid
-    if start is not None:
-        apgen.request["aflstart"] = str(start)
-
-    if reverse:
-        apgen.request["afldir"] = "newer"
-
-    return apgen
-
-APISite.abuselog = _abuselog

@@ -9,8 +9,7 @@ import init
 import difflib
 import wp
 import pywikibot
-from wp import ltime, lgenerator, lre
-from pywikibot.data import api
+from wp import ltime, lrepeat
 
 def glob():
     global container, pagereport
@@ -39,7 +38,7 @@ def notify(user, dic, insertDisamT):
     if not dic:
         return
 
-    pywikibot.output(u"notifying %s..." % user.title())
+    pywikibot.output("notifying %s..." % user.title())
     usertalk  = user.getUserTalkPage()
 
     def checkrefuse(fun):

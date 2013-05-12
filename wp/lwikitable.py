@@ -28,7 +28,7 @@ def wiki2table(content):
         What is the meaning of '||' at the beginning of line?
     """
     
-    content = lre.find(ur"(?ms)^\{\|.*?^\|\}", content)
+    content = lre.find(r"(?ms)^\{\|.*?^\|\}", content)
     if content is None:
         raise lexception.TableError
 
@@ -45,16 +45,16 @@ def wiki2table(content):
     linelist = []
     
     for line in lines:
-        if line.startswith(u"|-") or line.startswith(u"|}"):
+        if line.startswith("|-") or line.startswith("|}"):
             if linelist:
                 table.append(linelist)
                 linelist = []
-        elif line.startswith(u"|"):
+        elif line.startswith("|"):
             linelist.append(line[1:].strip())
     
     for line in table:
         if len(line) != len(header):
             raise lexception.TableError
     
-    header = (lre.find(ur"(?m)^\{\|.*?$", content), header)
+    header = (lre.find(r"(?m)^\{\|.*?$", content), header)
     return header, table
