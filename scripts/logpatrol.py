@@ -21,11 +21,10 @@ def getconfig():
 
 def main():
     user = {}
-    config = getconfig()
-    pywikibot.output(config)
     seen = set()
     start = site.getcurrenttime()
     while True:
+        config = getconfig()
         for i in config:
             for ab in site.abuselog(reverse=True, abuseid=i, start=start):
                 if (ab["user"], ab["timestamp"]) in seen:
@@ -45,7 +44,6 @@ def main():
                 pywikibot.output(list(deq))
                 if len(deq) >= config[i][1]:
                     pywikibot.output("Block!")
-
                     userobj = wp.User(ab["user"])
                     if userobj.isRegistered():
                         userobj.block(u"โรบอต: ก่อกวน ดูปูมการละเมิด",
@@ -69,7 +67,7 @@ def main():
         start = max(start, site.getcurrenttime() - ltime.td(seconds=120))
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("test")
+    args, site, conf = wp.pre("abuselog")
     try:
         glob()
         main()
