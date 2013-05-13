@@ -46,10 +46,10 @@ def main():
                     pywikibot.output("Block!")
                     userobj = wp.User(ab["user"])
                     if userobj.isRegistered():
-                        userobj.block(u"โรบอต: ก่อกวน ดูปูมการละเมิด",
+                        userobj.block(u"โรบอต: " + config[i][3],
                                         expiry=config[i][2])
                     else:
-                        userobj.block(u"โรบอต: ก่อกวน ดูปูมการละเมิด",
+                        userobj.block(u"โรบอต: " + config[i][3],
                                         expiry="1 day")
                     deq.clear()
                     pagetalk = userobj.getUserTalkPage()

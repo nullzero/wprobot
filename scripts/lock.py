@@ -8,7 +8,7 @@ import init
 import wp
 import pywikibot
 from collections import deque
-from wp import ltime
+from wp import ltime, lrepeat
 
 def glob():
     global storage
@@ -47,8 +47,10 @@ def check(revision):
         stitle.clear()
 
 def main():
-    gen = site.recentchanges(showRedirects=False, changetype=["edit", "new"],
-                             showBot=False, namespaces=[0], repeat=True)
+    gen = lrepeat.repeat(site, site.recentchanges, lambda x: x["revid"], 60,
+                         showRedirects=False, changetype=["edit", "new"],
+                         showBot=False, namespaces=[0],
+                         start=site.getcurrenttime() - ltime.td(hours=1))
     for rev in gen:
         try:
             check(rev)
