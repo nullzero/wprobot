@@ -45,6 +45,7 @@ def main():
                 if len(deq) >= config[i][1]:
                     pywikibot.output("Block!")
                     userobj = wp.User(ab["user"])
+                    if userobj.editCount() >= 5000: continue
                     if userobj.isRegistered():
                         userobj.block(u"โรบอต: " + config[i][3],
                                         expiry=config[i][2])

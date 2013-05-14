@@ -23,3 +23,11 @@ def _fullVersionHistory(self, reverseOrder=False, step=None,
            ]
 
 Page.fullVersionHistory = _fullVersionHistory
+
+def _editTime(self):
+    rev = self.latestRevision()
+    if rev not in self._revisions:
+        self.site.loadrevisions(self)
+    return pywikibot.Timestamp.fromISOformat(self._revisions[rev].timestamp)
+
+Page.editTime = _editTime

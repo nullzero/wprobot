@@ -7,6 +7,7 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
+from pywikibot.tools import itergroup
 
 def glob():
     pass
@@ -15,11 +16,13 @@ def process(lst):
     exist = site.pagesexist([x.toggleTalkPage().title() for x in lst])
     for i, page in enumerate(lst):
         if "/" in page.title():
-            continue
+            pywikibot.output("subpage " + page.title())
         if not exist[i][0]:
-            if page.botMayEdit():
+            if (page.botMayEdit() and
+                    (site.getcurrenttime() - page.editTime()).days >= 10):
                 pywikibot.output("deleting " + page.title())
-                page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)
+                if raw_input("... ") == "y":
+                    page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)
             else:
                 pywikibot.output("can't delete " + page.title())
 
@@ -32,13 +35,11 @@ def main():
             i.delete(reason=u"โรบอต: หน้าเปลี่ยนทางไม่จำเป็น", prompt=False)
 
     for ns in namespaces:
-        lst = []
-        for page in site.allpages(namespace=ns):
-            lst.append(page)
-            if len(lst) >= conf.step:
-                process(lst[:conf.step])
-                del lst[:conf.step]
-    process(lst)
+        pywikibot.output("ns " + str(ns))
+        gen = site.allpages(namespace=ns, content=True)
+        for i, pages in enumerate(itergroup(gen, 5000)):
+            pywikibot.output("processing bunch %d" % i)
+            process(pages)
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("deleteRedir")

@@ -12,7 +12,7 @@ def glob():
     pass
 
 def main():
-    print wp.Page("en:Alphabet").get()
+    print wp.Page(u"en:Template:Tambon_Thungsaliam").get()
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("test")
