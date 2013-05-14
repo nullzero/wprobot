@@ -13,6 +13,7 @@ import sys
 import os
 import traceback
 import datetime
+import time
 import pywikibot
 from pywikibot import config
 from conf import glob as conf
@@ -102,6 +103,7 @@ def pre(name, lock=False, sites=[]):
         if os.path.exists(lockfile):
             error("Lockfile found. Unable to execute the script.")
             pywikibot.stopme()
+            time.sleep(60*60*3)
             sys.exit()
         open(lockfile, 'w').close()
 
