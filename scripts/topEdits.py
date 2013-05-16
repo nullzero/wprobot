@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 """To update 500 top users who edit Wikipedia most."""
 

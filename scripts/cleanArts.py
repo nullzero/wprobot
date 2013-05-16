@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8  -*-
 """
 Clean pages which are given in argument list. If there is no argument,

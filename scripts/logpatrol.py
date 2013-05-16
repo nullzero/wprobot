@@ -1,5 +1,6 @@
+#!/usr/bin/python
 # -*- coding: utf-8  -*-
-"""Test page"""
+"""Block user by monitoring patrol log"""
 
 __version__ = "1.0.1"
 __author__ = "Sorawee Porncharoenwase"
