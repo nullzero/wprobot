@@ -8,23 +8,21 @@ to connect to pywikipedia library
 __version__ = "1.0.2"
 __author__ = "Sorawee Porncharoenwase"
 
-import init
 import sys
 import os
 import traceback
-import datetime
-import time
+import init
 import pywikibot
 from pywikibot import config
 from conf import glob as conf
+from wp import ltime, lthread
 
 def glob():
-    global basescript, fullname, lockfile, site
+    global info
+    info = {}
+    info["site"] = None
+    info["basescript"] = os.path.basename(sys.argv[0])
     conf.botname = os.environ["WPROBOT_BOT"]
-    basescript = os.path.basename(sys.argv[0])
-    fullname = None
-    lockfile = None
-    site = None
 
 def tostr(st):
     """Return normal quoted string."""
@@ -61,7 +59,7 @@ def error(e=None):
 
 def getTime():
     """Print timestamp."""
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return pywikibot.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def simplifypath(path):
     return os.path.abspath(os.path.expanduser(os.path.join(*path)))
@@ -74,17 +72,32 @@ def _login(namedict, sysop=False):
                     site.user() == site.username(sysop)):
                 site.login()
 
-def pre(name, lock=False, sites=[]):
+def pre(taskid=-1, lock=None, sites=[]):
     """
     Return argument list, site object, and configuration of the script.
     This function also handles default arguments, generates lockfile
     and halt the script if lockfile exists before.
     """
     import imp
-    global site
+    global info
+    pywikibot.handleArgs("-log")
+    pywikibot.output("start task #%s at %s" % (taskid, getTime()))
+    info["taskid"] = taskid
+    info["lock"] = lock
+    info["lockfile"] = simplifypath([os.environ["WPROBOT_DIR"], "tmp",
+                                     info["basescript"] + ".lock"])
+
+    if os.path.exists(info["lockfile"]) and (lock != False):
+        error("lockfile found. unable to execute the script.")
+        pywikibot.stopme()
+        sys.exit()
+
+    open(info["lockfile"], 'w').close()
+
     args = pywikibot.handleArgs() # must be called before getSite()
     site = pywikibot.getSite()
-    
+    info["site"] = site
+
     if sites == True:
         _login(config.usernames)
         _login(config.sysopnames, sysop=True)
@@ -93,48 +106,67 @@ def pre(name, lock=False, sites=[]):
         for isite in sites:
             _login({isite.family.name: {isite.code: None}})
 
-    global fullname, lockfile
-    pywikibot.handleArgs("-log")
-    fullname = name
-    pywikibot.output(">>> " + fullname + " <<< Start # " + getTime())
-    if lock:
-        lockfile = simplifypath([os.environ["WPROBOT_DIR"], "tmp",
-                                basescript + ".lock"])
-        if os.path.exists(lockfile):
-            error("Lockfile found. Unable to execute the script.")
-            pywikibot.stopme()
-            time.sleep(60*60*3)
-            sys.exit()
-        open(lockfile, 'w').close()
-
     confpath = simplifypath([os.environ["WPROBOT_DIR"], "conf",
-                                basescript])
+                            info["basescript"]])
+
     if os.path.exists(confpath):
         module = imp.load_source("conf", confpath)
     else:
         module = None
+
     return args, site, module
+
+def run(func):
+    global info
+    task = ReadCode(Page(u"User:Nullzerobot/แผงควบคุม"), "task")
+    task.load()
+
+    if info["taskid"] not in task.data:
+        func()
+        return
+
+    if not task.data[info["taskid"]]:
+        ltime.sleep(3 * 60 * 60) # sleep 3 hours
+        return
+
+    thread = lthread.EThread(target=func)
+    thread.daemon = True
+    thread.start()
+
+    while True:
+        for i in xrange(12):
+            if not thread.isAlive():
+                break
+            ltime.sleep(5)
+
+        task.load()
+        if not (task.data[info["taskid"]] and thread.isAlive()):
+            break
+
+    if thread.error:
+        raise RuntimeError
 
 def post(unlock=True):
     """
     This function removes throttle file. It also removes lockfile unless
     unlock variable is set to False
     """
-    if unlock and lockfile:
-        try:
-            os.remove(lockfile)
-        except OSError:
-            error("Unable to remove lockfile.")
 
-    pywikibot.output(">>> " + fullname + " <<< Stop # " + getTime())
+    if unlock or (not info["lock"]):
+        try:
+            os.remove(info["lockfile"])
+        except OSError:
+            error("unable to remove lockfile.")
+
+    pywikibot.output("stop task at " + getTime())
     pywikibot.stopme()
     sys.exit()
 
 def posterror():
     """This function forces program stop without removing lockfile"""
     error()
-    error(u"Suddenly halt!")
-    post(unlock = False)
+    error(u"suddenly halt!")
+    post(unlock=False)
 
 def handlearg(start, arg):
     if arg.startswith("-" + start + ":"):
@@ -147,21 +179,32 @@ Shortcut function.
 """
 
 def Page(title):
-    global site
-    if not site:
-        site = pywikibot.getSite()
-    return pywikibot.Page(site, title)
+    global info
+    if not info["site"]:
+        info["site"] = pywikibot.getSite()
+    return pywikibot.Page(info["site"], title)
 
 def User(title):
-    global site
-    if not site:
-        site = pywikibot.getSite()
-    return pywikibot.User(site, title)
+    global info
+    if not info["site"]:
+        info["site"] = pywikibot.getSite()
+    return pywikibot.User(info["site"], title)
 
 def Category(title):
-    global site
-    if not site:
-        site = pywikibot.getSite()
-    return pywikibot.Category(site, title)
+    global info
+    if not info["site"]:
+        info["site"] = pywikibot.getSite()
+    return pywikibot.Category(info["site"], title)
 
 glob()
+
+class ReadCode(object):
+    def __init__(self, page, var):
+        self.page = page
+        self.var = var
+        self.data = None
+
+    def load(self):
+        locals()[self.var] = {}
+        exec("\n".join(self.page.get(force=True).splitlines()[1:-1]))
+        self.data = locals()[self.var]

@@ -71,9 +71,9 @@ def process(text):
 
     source = wp.Page(params["source"])
     page = wp.Page(params["page"])
+    today = site.getcurrenttime()
 
-    if ("stable" in params and (ltime.dt.today() -
-                    pywikibot.Timestamp.fromISOformat(
+    if ("stable" in params and (today - pywikibot.Timestamp.fromISOformat(
                     source.getVersionHistory(total=1)[0][1])).days <
                     int(params["stable"])):
         return

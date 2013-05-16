@@ -19,7 +19,7 @@ def process(lst):
             pywikibot.output("subpage " + page.title())
         if not exist[i][0]:
             if (page.botMayEdit() and
-                    (site.getcurrenttime() - page.editTime()).days >= 10):
+                    (site.getcurrenttime() - page.editTime()).days >= 30):
                 pywikibot.output("deleting " + page.title())
                 if raw_input("... ") == "y":
                     page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)

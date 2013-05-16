@@ -23,18 +23,22 @@ def transform(dic):
     return out
 
 def main():
-    gen = itertools.chain(site.allpages(filterredir=False, start=u"ก"),
-                          site.allpages(filterredir=False, start=u"ก",
-                                        namespace=14))
     exlist = [exc.group(1) for exc in
               lre.pats["exc"].finditer(
               wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงชื่อฉลาก").get())]
+    t = site.getcurrenttime()
+    t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day - 1)
+    gen = site.recentchanges(start=t, reverse=True, showRedirects=False,
+                             namespaces=[0, 4, 10, 14])
     datasite = site.data_repository()
     disamitem = pywikibot.ItemPage(datasite, "Q11651459")
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
     wrongdisamitem = pywikibot.ItemPage(datasite, "Q4167410")
     descdisam = u"หน้าแก้ความกำกวมวิกิพีเดีย"
     for pages in itergroup(gen, 100):
+        pages = [wp.Page(page["title"]) for page in pages if
+                 ord(u"ก") <= ord(page["title"][0]) <= ord(u"๛")]
+                 # not block other namespace
         dat = datasite.loadcontent({"sites": site.dbName(),
                                     "titles": "|".join([page.title()
                                                         for page in pages])})
@@ -92,10 +96,15 @@ def main():
                 continue
             pywikibot.output("item: " + qitem)
             pywikibot.output("title: " + page.title())
-            item.editEntity(out)
+            try:
+                item.editEntity(out)
+            except:
+                wp.error()
+                pass
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("fill label", lock=True)
+    sites = [pywikibot.getSite("wikidata", "wikidata")]
+    args, site, conf = wp.pre("fill label", lock=True, sites=sites)
     try:
         glob()
         main()

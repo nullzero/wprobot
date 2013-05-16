@@ -13,19 +13,14 @@ from collections import deque
 def glob():
     lre.pats["trim"] = lre.lre(r"\{\{test\d?\}\}\s*")
 
-def getconfig():
-    config = {}
-    exec("\n".join(wp.Page(u"ผู้ใช้:Nullzerobot/ปูมการละเมิด").get()
-                                                         .splitlines()[1:-1]))
-    return config
-
 def main():
     user = {}
     seen = set()
     start = site.getcurrenttime()
+    config = wp.ReadCode(wp.Page(u"ผู้ใช้:Nullzerobot/ปูมการละเมิด"), "config")
     while True:
-        config = getconfig()
-        for i in config:
+        config.load()
+        for i in config.data:
             for ab in site.abuselog(reverse=True, abuseid=i, start=start):
                 if (ab["user"], ab["timestamp"]) in seen:
                     continue
@@ -45,7 +40,7 @@ def main():
                 if len(deq) >= config[i][1]:
                     pywikibot.output("Block!")
                     userobj = wp.User(ab["user"])
-                    if userobj.editCount() >= 5000: continue
+                    if userobj.editCount() >= 1000: continue
                     if userobj.isRegistered():
                         userobj.block(u"โรบอต: " + config[i][3],
                                         expiry=config[i][2])
@@ -68,10 +63,10 @@ def main():
         start = max(start, site.getcurrenttime() - ltime.td(seconds=120))
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("abuselog")
+    args, site, conf = wp.pre(2, lock=False)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

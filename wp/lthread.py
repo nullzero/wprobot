@@ -3,11 +3,13 @@
 __author__ = "Pywikipedia bot team"
 __license__ = "MIT"
 
-import datetime
+import sys
 from Queue import Queue
 from threading import Thread
 import init
+import wp
 import pywikibot
+from wp import ltime
 
 class ThreadPool(object):
     def wait_completion(self):
@@ -15,8 +17,7 @@ class ThreadPool(object):
         def remaining():
             remainingItems = self.pool.qsize() - 1
                 # -1 because we added a None element to stop the queue
-            remainingSeconds = datetime.timedelta(
-                    seconds=remainingItems)
+            remainingSeconds = ltime.td(seconds=remainingItems)
             return (remainingItems, remainingSeconds)
 
         self.pool.put((None, [], {}))
@@ -76,10 +77,24 @@ class LockObject(object):
         
     def do(self, s):
         while self.lock:
-            time.sleep(2)
+            time.sleep(1.5)
             
         self.lock = True
         pywikibot.output("lock acquired")
         self.func(s)
         self.lock = False
         pywikibot.output("lock released")
+
+class EThread(Thread):
+    def __init__(self, **kwargs):
+        super(EThread, self).__init__(**kwargs)
+        self._real_run = self.run
+        self.run = self._wrap_run
+        self.error = None
+
+    def _wrap_run(self):
+        try:
+            self._real_run()
+        except:
+            wp.error()
+            self.error = True

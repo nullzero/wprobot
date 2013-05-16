@@ -7,18 +7,25 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
+from wp import ltime
 
 def glob():
     pass
 
 def main():
-    print wp.Page(u"en:Template:Tambon_Thungsaliam").get()
+    i = 0
+    while True:
+        pywikibot.output(i)
+        i += 1
+        if i == 3:
+            raise NotImplementedError
+        ltime.sleep(10)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("test")
+    args, site, conf = wp.pre(1)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

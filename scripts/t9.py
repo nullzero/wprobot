@@ -12,6 +12,12 @@ from wp import lnotify, lre, lrepeat
 
 def glob():
     lre.pats["stripcomment"] = lre.lre(u"(?s):?\s*เนื้อหาเดิม.*")
+    lre.pats["ref"] = lre.lre(u"(?ms)^== *อ้างอิง *==.*")
+
+def cntref(text):
+    return (text.count("<ref") +
+           (lre.pats["ref"].find(text) or "").count("http://") +
+           (lre.pats["ref"].find(text) or "").count("https://"))
 
 def process(pagenow, page, user):
     if page is None:
@@ -19,16 +25,23 @@ def process(pagenow, page, user):
     if (user.editCount() >= 5000 and "autoconfirmed" in user.groups()) or (
                                      "sysop" in user.groups()):
         return
-    pywikibot.output(">>> " + pagenow.title() + " " + page.title())
     text = pagenow.get()
+    nowrefs = cntref(text)
+    pywikibot.output(">>> %s | %s with %d refs" %
+                    (pagenow.title(), page.title(), nowrefs))
     ts = None
     for gen in site.deletedrevs(page, get_text=True, reverse=True):
         for rev in gen["revisions"]:
             ratio = difflib.SequenceMatcher(None, text, rev["*"]).ratio()
-            pywikibot.output("processing %s; ratio %f" % (rev["revid"], ratio))
+            oldrefs = cntref(rev["*"])
+            pywikibot.output("processing %s; ratio %f; %d refs" %
+                            (rev["revid"], ratio, oldrefs))
             if ratio >= 0.8:
-                ts = pywikibot.Timestamp.fromISOformat(rev["timestamp"])
-                break
+                if nowrefs <= oldrefs:
+                    ts = pywikibot.Timestamp.fromISOformat(rev["timestamp"])
+                    break
+                else:
+                    pywikibot.output("refs has been improved")
         break
 
     if ts is None:
@@ -95,10 +108,10 @@ def main():
             wp.error()
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("T9 Deleter")
+    args, site, conf = wp.pre(1, lock=False)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

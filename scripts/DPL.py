@@ -133,7 +133,7 @@ def main():
 
     signal.signal(signal.SIGUSR2, receive_signal)
 
-    prevday = ltime.dt.today().day
+    prevday = pywikibot.Timestamp.today().day
     for rev in lrepeat.repeat(site, site.recentchanges, lambda x: x["revid"],
                               60, showRedirects=False, showBot=False,
                               changetype=["edit", "new"],
@@ -143,14 +143,14 @@ def main():
         except:
             wp.error()
 
-        if ((prevday != ltime.dt.today().day) and
-                       (ltime.dt.today().day % 3 == 1)):
+        if ((prevday != pywikibot.Timestamp.today().day) and
+                       (pywikibot.Timestamp.today().day % 3 == 1)):
             try:
                 flush()
             except:
                 wp.error()
 
-            prevday = ltime.dt.today().day
+            prevday = pywikibot.Timestamp.today().day
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("notify linking to disambigous page",

@@ -8,8 +8,6 @@ __author__ = "Sorawee Porncharoenwase"
 
 import datetime
 import time
-import init
-import pywikibot
 
 def wrapMonth(m):
     """Convert zero-based month number to zero-based month number."""
@@ -57,6 +55,5 @@ def getNumDay(year, month):
         
     return [0, 31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month]
 
-dt = pywikibot.Timestamp
 td = datetime.timedelta
 sleep = time.sleep

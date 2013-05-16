@@ -182,8 +182,8 @@ def _getToken(self, tokentype, force=False):
 
     """
     if (not force) and (tokentype in self._token) and (
-                  (ltime.dt.today() - self._token[tokentype][1]).seconds <
-                   2 * 60 * 60):
+                  (pywikibot.Timestamp.today() -
+                   self._token[tokentype][1]).seconds < 2 * 60 * 60):
         return self._token[tokentype][0]
 
     query = api.PropertyGenerator("info",
@@ -191,7 +191,8 @@ def _getToken(self, tokentype, force=False):
                                   intoken=tokentype,
                                   site=self)
     for item in query:
-        self._token[tokentype] = (item[tokentype + "token"], ltime.dt.today())
+        self._token[tokentype] = (item[tokentype + "token"],
+                                  pywikibot.Timestamp.today())
         return self._token[tokentype][0]
 
 APISite.getToken = _getToken
