@@ -35,18 +35,18 @@ def main():
                 deq = user[ab["user"]][i]
                 deq.append(pywikibot.Timestamp.fromISOformat(ab["timestamp"]))
                 now = site.getcurrenttime()
-                while deq and ((now - deq[0]).seconds >= config[i][0]):
+                while deq and ((now - deq[0]).seconds >= config.data[i][0]):
                     deq.popleft()
                 pywikibot.output(list(deq))
-                if len(deq) >= config[i][1]:
+                if len(deq) >= config.data[i][1]:
                     pywikibot.output("Block!")
                     userobj = wp.User(ab["user"])
                     if userobj.editCount() >= 1000: continue
                     if userobj.isRegistered():
-                        userobj.block(u"โรบอต: " + config[i][3],
-                                        expiry=config[i][2])
+                        userobj.block(u"โรบอต: " + config.data[i][3],
+                                        expiry=config.data[i][2])
                     else:
-                        userobj.block(u"โรบอต: " + config[i][3],
+                        userobj.block(u"โรบอต: " + config.data[i][3],
                                         expiry="1 day")
                     deq.clear()
                     pagetalk = userobj.getUserTalkPage()
@@ -71,5 +71,4 @@ if __name__ == "__main__":
     except:
         wp.posterror()
     else:
-        pass
         wp.post()

@@ -14,21 +14,17 @@ def glob():
     pass
 
 def main():
-    i = 0
     while True:
-        pywikibot.output(i)
-        i += 1
-        if i == 3:
-            raise NotImplementedError
-        ltime.sleep(10)
+        print "a"
+        ltime.sleep(1)
+        raise NotImplementedError
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(1)
+    args, site, conf = wp.pre(1, lock=True)
     try:
         glob()
         wp.run(main)
     except:
         wp.posterror()
     else:
-        pass
         wp.post()

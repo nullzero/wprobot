@@ -55,7 +55,8 @@ def error(e=None):
         exc = sys.exc_info()[0]
         if (exc == KeyboardInterrupt) or (exc == SystemExit):
             sys.exit()
-        pywikibot.output("E: " + toutf(traceback.format_exc()))
+        else:
+            pywikibot.output("E: " + toutf(traceback.format_exc()))
 
 def getTime():
     """Print timestamp."""
@@ -133,15 +134,18 @@ def run(func):
     thread.daemon = True
     thread.start()
 
-    while True:
-        for i in xrange(12):
-            if not thread.isAlive():
-                break
-            ltime.sleep(5)
+    try:
+        while True:
+            for i in xrange(12):
+                if not thread.isAlive():
+                    break
+                ltime.sleep(5)
 
-        task.load()
-        if not (task.data[info["taskid"]] and thread.isAlive()):
-            break
+            task.load()
+            if not (task.data[info["taskid"]] and thread.isAlive()):
+                break
+    except:
+        error()
 
     if thread.error:
         raise RuntimeError
@@ -164,9 +168,13 @@ def post(unlock=True):
 
 def posterror():
     """This function forces program stop without removing lockfile"""
-    error()
-    error(u"suddenly halt!")
-    post(unlock=False)
+    try:
+        error()
+    except (KeyboardInterrupt, SystemExit):
+        post()
+    else:
+        error("suddenly halt!")
+        post(unlock=False)
 
 def handlearg(start, arg):
     if arg.startswith("-" + start + ":"):

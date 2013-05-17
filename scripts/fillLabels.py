@@ -29,21 +29,22 @@ def main():
               wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงชื่อฉลาก").get())]
     t = site.getcurrenttime()
     t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day - 1)
-    gen = site.recentchanges(start=t, reverse=True, showRedirects=False,
-                             namespaces=[0, 4, 10, 14])
+    gen1 = site.recentchanges(start=t, reverse=True, showRedirects=False,
+                              showBot=False, changetype=["new", "edit"],
+                              namespaces=[0, 4, 10, 14])
+    pages1 = [page["title"] for page in gen1]
+    gen2 = site.logevents(start=t, reverse=True, logtype="move")
+    pages2 = [page.new_title().title() for page in gen2]
+    allpages = list(set(filter(lambda x: (ord(u"ก") <= ord(x[0]) <= ord(u"๛")),
+               pages1 + pages2)))
     datasite = site.data_repository()
     disamitem = pywikibot.ItemPage(datasite, "Q11651459")
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
     wrongdisamitem = pywikibot.ItemPage(datasite, "Q4167410")
     descdisam = u"หน้าแก้ความกำกวมวิกิพีเดีย"
-    for pages in itergroup(gen, 100):
-        pages = [wp.Page(page["title"]) for page in pages if
-                 ord(u"ก") <= ord(page["title"][0]) <= ord(u"๛")]
-                 # not block other namespace
+    for pages in itergroup(pages1 + pages2, 100):
         dat = datasite.loadcontent({"sites": site.dbName(),
-                                    "titles": "|".join([page.title()
-                                                        for page in pages])})
-
+                                    "titles": "|".join(pages)})
         for i, qitem in enumerate(dat):
             if not qitem.startswith("q"): continue
             item = pywikibot.ItemPage(datasite, qitem)
@@ -112,5 +113,4 @@ if __name__ == "__main__":
     except:
         wp.posterror()
     else:
-        pass
         wp.post()
