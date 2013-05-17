@@ -51,13 +51,16 @@ def main():
 
     allpages = list(set(filter(lambda x: (ord(u"ก") <= ord(x[0]) <= ord(u"๛")),
                pages1 + pages2 + pages3)))
-    pywikibot.output("processing %d pages" % len(allpages))
     datasite = site.data_repository()
     disamitem = pywikibot.ItemPage(datasite, "Q11651459")
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
     wrongdisamitem = pywikibot.ItemPage(datasite, "Q4167410")
     descdisam = u"หน้าแก้ความกำกวมวิกิพีเดีย"
+    cnti = 0
+    pywikibot.output("processing %d pages" % len(allpages))
     for pages in itergroup(allpages, 100):
+        cnti += 1
+        pywikibot.output("round %d" % cnti)
         dat = datasite.loadcontent({"sites": site.dbName(),
                                     "titles": "|".join(pages)})
         for i, qitem in enumerate(dat):
