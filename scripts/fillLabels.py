@@ -27,16 +27,30 @@ def main():
     exlist = [exc.group(1) for exc in
               lre.pats["exc"].finditer(
               wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงชื่อฉลาก").get())]
-    t = site.getcurrenttime()
-    t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day - 1)
-    gen1 = site.recentchanges(start=t, reverse=True, showRedirects=False,
-                              showBot=False, changetype=["new", "edit"],
-                              namespaces=[0, 4, 10, 14])
-    pages1 = [page["title"] for page in gen1]
-    gen2 = site.logevents(start=t, reverse=True, logtype="move")
-    pages2 = [page.new_title().title() for page in gen2]
+    pages1, pages2, pages3 = [], [], []
+    if not args:
+        pywikibot.output("quickscan mode")
+        t = site.getcurrenttime()
+        t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day - 1)
+        gen1 = site.recentchanges(start=t, reverse=True, showRedirects=False,
+                                  showBot=False, changetype=["new", "edit"],
+                                  namespaces=[0, 4, 10, 14])
+        pages1 = [page["title"] for page in gen1]
+        gen2 = site.logevents(start=t, reverse=True, logtype="move")
+        pages2 = [page.new_title().title() for page in gen2]
+    elif args[0] == "-all":
+        pywikibot.output("fullscan mode")
+        gen3 = itertools.chain(site.allpages(filterredir=False, start=u"ก"),
+               site.allpages(filterredir=False, start=u"ก", namespace=4),
+               site.allpages(filterredir=False, start=u"ก", namespace=10),
+               site.allpages(filterredir=False, start=u"ก", namespace=14))
+        pages3 = [page.title() for page in gen3]
+    else:
+        pywikibot.output("unknown argument")
+        return
+
     allpages = list(set(filter(lambda x: (ord(u"ก") <= ord(x[0]) <= ord(u"๛")),
-               pages1 + pages2)))
+               pages1 + pages2 + pages3)))
     datasite = site.data_repository()
     disamitem = pywikibot.ItemPage(datasite, "Q11651459")
     thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
