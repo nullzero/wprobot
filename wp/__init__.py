@@ -73,7 +73,7 @@ def _login(namedict, sysop=False):
                     site.user() == site.username(sysop)):
                 site.login()
 
-def pre(taskid=-1, lock=None, sites=[]):
+def pre(taskid=-1, lock=None, sites=[], continuous=False):
     """
     Return argument list, site object, and configuration of the script.
     This function also handles default arguments, generates lockfile
@@ -87,7 +87,7 @@ def pre(taskid=-1, lock=None, sites=[]):
     info["lock"] = lock
     info["lockfile"] = simplifypath([os.environ["WPROBOT_DIR"], "tmp",
                                      info["basescript"] + ".lock"])
-
+    info["continuous"] = continuous
     if os.path.exists(info["lockfile"]) and (lock != False):
         error("lockfile found. unable to execute the script.")
         pywikibot.stopme()
@@ -164,6 +164,8 @@ def post(unlock=True):
 
     pywikibot.output("stop task at " + getTime())
     pywikibot.stopme()
+    if info["continuous"]:
+        raise RuntimeError
     sys.exit()
 
 def posterror():

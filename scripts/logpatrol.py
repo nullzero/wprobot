@@ -25,6 +25,7 @@ def main():
             for ab in site.abuselog(reverse=True, abuseid=i, start=start):
                 if (ab["user"], ab["timestamp"]) in seen:
                     continue
+                raise RuntimeError
                 seen.add((ab["user"], ab["timestamp"]))
                 pywikibot.output("filter: %s\t\tuser: %s\t\ttime: %s" %
                             (i, ab["user"].ljust(16), ab["timestamp"]))
@@ -39,7 +40,7 @@ def main():
                     deq.popleft()
                 pywikibot.output(list(deq))
                 if len(deq) >= config.data[i][1]:
-                    pywikibot.output("Block!")
+                    pywikibot.output("block!")
                     userobj = wp.User(ab["user"])
                     if userobj.editCount() >= 1000: continue
                     if userobj.isRegistered():
