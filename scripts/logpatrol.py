@@ -25,7 +25,6 @@ def main():
             for ab in site.abuselog(reverse=True, abuseid=i, start=start):
                 if (ab["user"], ab["timestamp"]) in seen:
                     continue
-                raise RuntimeError
                 seen.add((ab["user"], ab["timestamp"]))
                 pywikibot.output("filter: %s\t\tuser: %s\t\ttime: %s" %
                             (i, ab["user"].ljust(16), ab["timestamp"]))
@@ -65,7 +64,7 @@ def main():
         start = max(start, site.getcurrenttime() - ltime.td(seconds=120))
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(2, lock=False)
+    args, site, conf = wp.pre(2, lock=False, continuous=True)
     try:
         glob()
         wp.run(main)

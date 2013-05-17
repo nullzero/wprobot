@@ -109,7 +109,7 @@ def main():
             wp.error()
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(1, lock=False)
+    args, site, conf = wp.pre(1, lock=False, continuous=True)
     try:
         glob()
         wp.run(main)

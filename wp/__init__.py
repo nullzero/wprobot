@@ -155,18 +155,13 @@ def post(unlock=True):
     This function removes throttle file. It also removes lockfile unless
     unlock variable is set to False
     """
-
     if unlock or (not info["lock"]):
         try:
             os.remove(info["lockfile"])
         except OSError:
             error("unable to remove lockfile.")
-
     pywikibot.output("stop task at " + getTime())
     pywikibot.stopme()
-    if info["continuous"]:
-        raise RuntimeError
-    sys.exit()
 
 def posterror():
     """This function forces program stop without removing lockfile"""
@@ -174,9 +169,12 @@ def posterror():
         error()
     except (KeyboardInterrupt, SystemExit):
         post()
+        sys.exit()
     else:
         error("suddenly halt!")
         post(unlock=False)
+    if info["continuous"]:
+        raise RuntimeError
 
 def handlearg(start, arg):
     if arg.startswith("-" + start + ":"):
