@@ -16,6 +16,9 @@ def glob():
 
 def notify(template, page, dic, summary, nocreate=True,
            botflag=True, async=False):
+    if page.isRedirectPage():
+        page = page.getRedirectTarget()
+
     text = None
     force = random.randint(0, 64) == 0
     if force or hasattr(notify, "_template"):

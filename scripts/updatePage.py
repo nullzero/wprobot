@@ -170,7 +170,7 @@ def process(text):
                                  cat.title())
 
     for user in params["notifyuser"]:
-        lnotify.notify("update-page", wp.User(user).getUserTalkPage(), {
+        lnotify.notify("updatePage", wp.User(user).getUserTalkPage(), {
                     "page": page.title(),
                     "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
                     "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if

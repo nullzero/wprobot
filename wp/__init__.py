@@ -55,8 +55,7 @@ def error(e=None):
         exc = sys.exc_info()[0]
         if (exc == KeyboardInterrupt) or (exc == SystemExit):
             sys.exit()
-        else:
-            pywikibot.output("E: " + toutf(traceback.format_exc()))
+        pywikibot.output("E: " + toutf(traceback.format_exc()))
 
 def getTime():
     """Print timestamp."""
@@ -110,11 +109,8 @@ def pre(taskid=-1, lock=None, sites=[], continuous=False):
     confpath = simplifypath([os.environ["WPROBOT_DIR"], "conf",
                             info["basescript"]])
 
-    if os.path.exists(confpath):
-        module = imp.load_source("conf", confpath)
-    else:
-        module = None
-
+    module = (imp.load_source("conf", confpath) if os.path.exists(confpath)
+                                                else None)
     return args, site, module
 
 def run(func):

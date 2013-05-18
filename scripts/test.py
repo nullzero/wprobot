@@ -14,13 +14,10 @@ def glob():
     pass
 
 def main():
-    while True:
-        print "a"
-        ltime.sleep(1)
-        raise NotImplementedError
+    print wp.User("Nullzero").name()
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(1, lock=True)
+    args, site, conf = wp.pre(1)
     try:
         glob()
         wp.run(main)

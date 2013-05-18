@@ -10,8 +10,7 @@ def _block(self, summary, expiry=None, anon=False, noCreate=True,
            hidename=False):
     if self.isBlocked() and not reBlock:
         pywikibot.output("AlreadyBlocked")
-        return
-        #raise AlreadyBlocked()
+        raise NotImplementedError
     try:
         self.site.login(sysop=True)
     except pywikibot.NoUsername, e:
