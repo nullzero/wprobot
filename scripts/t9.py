@@ -80,7 +80,7 @@ def process(pagenow, page, user):
                         "reason": (u' "%s"' % reason if reason
                                                      else u"บางประการ"),
                     }, u"แจ้งเตือนการสร้างหน้าที่เคยถูกลบ", nocreate=False,
-                    botflag=False, async=True)
+                    botflag=False)
 
     pywikibot.output(u"had deleted for %d times" % cntdel)
     if cntdel >= 3:

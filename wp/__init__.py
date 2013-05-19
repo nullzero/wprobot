@@ -206,7 +206,7 @@ class ReadCode(object):
     def __init__(self, page, var):
         self.page = page
         self.var = var
-        self.data = None
+        self.data = {}
 
     def load(self):
         locals()[self.var] = {}
