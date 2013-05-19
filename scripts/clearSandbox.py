@@ -22,10 +22,10 @@ def main():
         page.put(conf.text, conf.summary)    
         
 if __name__ == "__main__":
-    args, site, conf = wp.pre("clearSandbox", lock=True)
+    args, site, conf = wp.pre(6, lock=True)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

@@ -217,11 +217,10 @@ def main():
 
 if __name__ == "__main__":
     sites = [pywikibot.getSite("wikidata", "wikidata")]
-    args, site, conf = wp.pre("move category service", lock=True,
-                              sites=sites)
+    args, site, conf = wp.pre(-1, lock=True, sites=sites)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

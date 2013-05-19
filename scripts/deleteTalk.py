@@ -17,13 +17,12 @@ def process(lst):
     exist = site.pagesexist([x.toggleTalkPage().title() for x in lst])
     for i, page in enumerate(lst):
         if "/" in page.title():
-            pywikibot.output("subpage " + page.title())
+            continue
         if not exist[i][0]:
             if (page.botMayEdit() and
                     (site.getcurrenttime() - page.editTime()).days >= 30):
                 pywikibot.output("deleting " + page.title())
-                if raw_input("... ") == "y":
-                    page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)
+                page.delete(reason=u"โรบอต: หน้าขึ้นกับหน้าว่าง", prompt=False)
             else:
                 pywikibot.output("can't delete " + page.title())
 
@@ -43,10 +42,10 @@ def main():
             process(pages)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("deleteRedir")
+    args, site, conf = wp.pre(3, lock=True)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

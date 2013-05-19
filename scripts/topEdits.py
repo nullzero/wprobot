@@ -70,11 +70,10 @@ def main():
             activedata)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("update top users who edit most",
-                              lock=True)
+    args, site, conf = wp.pre(8, lock=True)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

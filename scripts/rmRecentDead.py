@@ -48,10 +48,10 @@ def main():
             page.put(lre.pats["tl"].sub(u"", page.get()), conf.summary)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(u"remove recent death template", lock=True)
+    args, site, conf = wp.pre(5, lock=True)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

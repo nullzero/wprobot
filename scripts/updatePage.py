@@ -190,10 +190,10 @@ def main():
     pool.wait_completion()
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("updatePage")
+    args, site, conf = wp.pre(-2, lock=True)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

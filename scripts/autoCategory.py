@@ -172,10 +172,11 @@ def main():
             wp.error()
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre("categorize automatically")
+    sites = [pywikibot.getSite("wikidata", "wikidata")]
+    args, site, conf = wp.pre(-3, lock=True, sites=sites)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

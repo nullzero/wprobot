@@ -361,8 +361,10 @@ def _pageslanglinks(self, pages, step=None, total=None):
 APISite.pageslanglinks = _pageslanglinks
 
 def _getLang(self, pages):
-    pages[0].site.pageslanglinks(pages)
-    return [page.getLang(self) for page in pages]
+    if pages:
+        pages[0].site.pageslanglinks(pages)
+        return [page.getLang(self) for page in pages]
+    return []
 
 APISite.getLang = _getLang
 

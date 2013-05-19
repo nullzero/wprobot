@@ -62,10 +62,10 @@ def main():
     pagewrite.put(content, conf.summary)
 
 if __name__ == "__main__":
-    args, site, conf = wp.pre(u"update request articles", lock=True)
+    args, site, conf = wp.pre(7, lock=True)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:

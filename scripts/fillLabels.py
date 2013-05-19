@@ -124,10 +124,10 @@ def main():
 
 if __name__ == "__main__":
     sites = [pywikibot.getSite("wikidata", "wikidata")]
-    args, site, conf = wp.pre("fill label", lock=True, sites=sites)
+    args, site, conf = wp.pre(4, lock=True, sites=sites)
     try:
         glob()
-        main()
+        wp.run(main)
     except:
         wp.posterror()
     else:
