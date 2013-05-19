@@ -262,7 +262,7 @@ Page.getLang = _getLang
 def _append(self, text, comment="", minorEdit=True, botflag=True,
            async=False, nocreate=True):
     # TODO: async support
-    site.login()
+    self.site.login()
     token = self.site.token(self, "edit")
     #token = page.site.getToken("edit")
     r = api.Request(site=self.site, action="edit", title=self.title(),

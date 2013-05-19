@@ -48,7 +48,10 @@ def main():
     start = site.getcurrenttime()
     config = wp.ReadCode(wp.Page(u"ผู้ใช้:Nullzerobot/ปูมการละเมิด"), "config")
     while True:
+        oldConfig = dict(config.data)
         config.load()
+        if oldConfig != config.data:
+            pywikibot.output(">>> reload new config!")
         for i in config.data:
             data = config.data[i]
             for ab in site.abuselog(reverse=True, abuseid=i, start=start):
