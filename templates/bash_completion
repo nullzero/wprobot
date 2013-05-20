@@ -1,5 +1,21 @@
 #!/bin/bash
 
+function submitB(){
+    jsub $2 -once -j y -o /dev/null ~/wprobot/scripts/$1 -bot:Nullzerobot
+}
+
+function autoCategory(){
+    submitB autoCategory.py "-mem 512m"
+}
+
+function submit(){
+    submitB $1 "$2"
+}
+
+function wlog(){
+    tail -F -n 100 ~/wprobot/bots/Nullzerobot/logs/$1
+}
+
 function _runwp(){
     local cur prev opts
     COMPREPLY=()
@@ -29,6 +45,24 @@ function _runwp(){
         ;;
     esac
 } && complete -F _runwp runwp
+
+function _sscript(){
+    local cur
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    local files=$(for x in ~/wprobot/scripts/* ; do \
+                                echo ${x##*/} ; \
+                                done)
+    COMPREPLY=( $(compgen -W "${files}" -- ${cur}) )
+} && complete -F _sscript submit
+
+function _wlog(){
+    local cur
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    local files=$(for x in ~/wprobot/bots/Nullzerobot/logs/* ; do \
+                                echo ${x##*/} ; \
+                                done)
+    COMPREPLY=( $(compgen -W "${files}" -- ${cur}) )
+} && complete -F _wlog wlog
 
 #"open")
         #local files=$(for x in * ; do \
