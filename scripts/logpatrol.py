@@ -55,9 +55,9 @@ def main():
         for i in config.data:
             data = config.data[i]
             for ab in site.abuselog(reverse=True, abuseid=i, start=start):
-                if (ab["user"], ab["timestamp"]) in seen:
+                if (ab["id"]) in seen:
                     continue
-                seen.add((ab["user"], ab["timestamp"]))
+                seen.add(ab["id"])
                 pywikibot.output("filter: %s\t\tuser: %s\t\ttime: %s" %
                                 (i, ab["user"].ljust(16), ab["timestamp"]))
                 userobj = wp.User(ab["user"])

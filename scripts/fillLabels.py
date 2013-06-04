@@ -31,7 +31,13 @@ def main():
     if not args:
         pywikibot.output("quickscan mode")
         t = site.getcurrenttime()
-        t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day - 1)
+        if t.day == 1:
+            if t.month == 1:
+                t = pywikibot.Timestamp(year=t.year-1, month=12, day=31)
+            else:
+                t = pywikibot.Timestamp(year=t.year, month=t.month-1, day=28)
+        else:
+            t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day-1)
         gen1 = site.recentchanges(start=t, reverse=True, showRedirects=False,
                                   showBot=False, changetype=["new", "edit"],
                                   namespaces=[0, 4, 10, 14])
