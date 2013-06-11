@@ -40,7 +40,7 @@ def process(user, data, ab):
         lnotify.notify(data["template"], page, {
                             "user": user.name(),
                             "title": ab["title"],
-                       }, u"โรบอต: " + summary, nocreate=False)
+                       }, u"โรบอต: " + summary, nocreate=False, botflag=False)
 
 def main():
     user = {}
