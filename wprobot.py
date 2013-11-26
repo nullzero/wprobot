@@ -22,11 +22,10 @@ def init():
     sys.argv.append("-dir:" + dirbot)
 
     sys.path.append(simplifypath(os.environ["WPROBOT_DIR"]))
-    #sys.path.append(simplifypath(os.environ["WPROBOT_DIR"], "externals/pyparsing"))
 
     import conf.conf
     sys.path.append(simplifypath(conf.conf.pywikibotDir))
-    sys.path.append(simplifypath(conf.conf.pywikibotDir, "externals/httplib2"))
+    sys.path.append(simplifypath(conf.conf.pywikibotDir, "externals"))
 
     import patch
 
