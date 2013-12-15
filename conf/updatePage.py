@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 
-title = u"ผู้ใช้:Nullzerobot/ปรับปรุงหน้าอัตโนมัติ"
+title = u"Nullzerobot/ปรับปรุงหน้าอัตโนมัติ"
 
 translateKey = {}
 translateKey[u"หน้า"] = "page"

@@ -15,11 +15,13 @@ from wp import lre, lnotify, lthread, ltime
 debug = False
 
 def glob():
+    global putWithSysop
     lre.pats["entry"] = lre.lre(ur"(?sm)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*"
                                 ur"((?:\{\{.*?\}\}|.)*?)\s*\}\}")
     lre.pats["param"] = lre.lre(r"(?s)\|\s*((?:\{\{.*?\}\}|.)*?)\s*(?=\|)")
     lre.pats["num"] = lre.lre(r"\d+$")
     lre.pats["user0"] = lre.lre(r"\{\{User0\|(.*?)\}\}")
+    putWithSysop = []
 
 def checkparams(params):
     # NotImplemented
@@ -42,6 +44,8 @@ def parse(text):
             ).replace("<!-- B1acks1ash dummy -->", "")
 
 def process(text):
+    global putWithSysop
+    
     params = {"find"  : [], "replace"   : [],
               "param" : [], "translate" : [],
               "depr"  : [], "rdepr"     : []}
@@ -87,9 +91,8 @@ def process(text):
 
     for i, sfind in enumerate(params["find"]):
         newtext = text.replace(parse(sfind), parse(params["replace"][i]))
-        if newtext == text:
-            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ %d" %
-                            (i + 1))
+        if newtext == text and parse(sfind) != params["replace"][i]:
+            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ %d" % (i + 1))
         text = newtext
 
     def matchbrace(s, i):
@@ -156,8 +159,11 @@ def process(text):
 
     if "sandbox" in params and params["sandbox"] == conf.yes:
         page = wp.Page(page.title() + "/sandbox")
-
-    page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
+    
+    try:
+        page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
+    except pywikibot.LockedPage:
+        putWithSysop.append((page, text))
 
     if checkcat:
         time.sleep(30)
@@ -169,25 +175,25 @@ def process(text):
                                  u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก" %
                                  cat.title())
 
-    for user in params["notifyuser"]:
+    #for user in params["notifyuser"]:
+    for user in ["Nullzero"]:
         lnotify.notify("updatePage", wp.User(user).getUserTalkPage(), {
                     "page": page.title(),
                     "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
-                    "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if
+                    "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if # มีเดียวิกิ:Scribunto-common-error-category
                                    page.namespace() == 828 else ""
                 }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
 
-def process0(text):
-    try:
-        process(text)
-    except:
-        wp.error()
-
 def main():
     pool = lthread.ThreadPool(30)
-    for req in lre.pats["entry"].finditer(wp.Page(conf.title).get()):
-        pool.add_task(process, req.group(1))
+    for page in site.allpages(prefix=conf.title, content=True, namespace=2):
+        for req in lre.pats["entry"].finditer(page.get()):
+            pool.add_task(process, req.group(1))
     pool.wait_completion()
+    
+    site.switchuser("Nullzero", False)
+    for (page, text) in putWithSysop:
+        page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
 
 if __name__ == "__main__":
     args, site, conf = wp.pre(-2, lock=True)

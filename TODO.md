@@ -1,5 +1,4 @@
 # TODO list & Status
-
 + topEdits
  1. read limit from page
 + linkStats (new)
@@ -7,3 +6,6 @@
 + blockpageschecker
  1. support i18n
  1. look for template at /doc subpage first
++ t9
+ 1. delete talk page too
++ 

@@ -10,8 +10,9 @@ import wp
 import pywikibot
 
 def main():
-    pass
-    
+    for i in site.broken_redirects():
+        print i
+
 if __name__ == "__main__":
     args, site, conf = wp.pre(0)
     try:
