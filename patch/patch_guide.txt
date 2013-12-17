@@ -1,0 +1,29 @@
+== Class ==
+In order to patch a class, we will import everything from the file
+>>> from pywikibot.page import *
+
+Now we can refer to class "Page", "User", ... which are in file page.py
+
+If we need to use our own functions, also import init and wp
+>>> import init
+>>> import wp
+
+Write any function that we want to patch with the same name but has underscore character as the prefix
+>>> def _change_category(...)
+
+After implementing functions, map the new functions with the old functions
+>>> Page.change_category = _change_category
+
+== Function ==
+In order to patch functions without class encapsulating it, we will import everything from the file and import the file itself
+>>> import pywikibot.textlib
+>>> from pywikibot.textlib import *
+
+Follow the same process as that when we edit a class
+>>> import init # optional
+>>> import wp # optional
+>>> def _getLanguageLinks(...)
+
+Map the new function to functions both in file and outside file
+>>> pywikibot.textlib.getLanguageLinks = _getLanguageLinks # Use inside textlib.py
+>>> pywikibot.getLanguageLinks = _getLanguageLinks # Use outside textlib.py

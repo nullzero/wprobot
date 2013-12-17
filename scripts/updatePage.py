@@ -45,7 +45,7 @@ def parse(text):
 
 def process(text):
     global putWithSysop
-    
+
     params = {"find"  : [], "replace"   : [],
               "param" : [], "translate" : [],
               "depr"  : [], "rdepr"     : []}
@@ -91,7 +91,7 @@ def process(text):
 
     for i, sfind in enumerate(params["find"]):
         newtext = text.replace(parse(sfind), parse(params["replace"][i]))
-        if newtext == text and parse(sfind) != params["replace"][i]:
+        if newtext == text and sfind != params["replace"][i]:
             errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ %d" % (i + 1))
         text = newtext
 
@@ -139,8 +139,7 @@ def process(text):
                           u'<span class="error">พารามิเตอร์ %(depr)s '
                           u'ล้าสมัยแล้ว โปรดใช้ %(rdepr)s แทนที่</span><br />'
                           u'}}</includeonly>'
-            % {
-                "depr": sdepr,
+            % { "depr": sdepr,
                 "rdepr": params["rdepr"][i],
                 "cat": category.title(),
             })
@@ -159,7 +158,7 @@ def process(text):
 
     if "sandbox" in params and params["sandbox"] == conf.yes:
         page = wp.Page(page.title() + "/sandbox")
-    
+
     try:
         page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
     except pywikibot.LockedPage:
@@ -190,7 +189,7 @@ def main():
         for req in lre.pats["entry"].finditer(page.get()):
             pool.add_task(process, req.group(1))
     pool.wait_completion()
-    
+
     site.switchuser("Nullzero", False)
     for (page, text) in putWithSysop:
         page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")

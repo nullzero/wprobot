@@ -31,7 +31,7 @@ def process(user, data, ab):
             if "anonBlockDuration" in data:
                 expiry = data["anonBlockDuration"]
         try:
-            user.block(u"โรบอต: " + data["summary"], expiry=expiry)
+            user.block(reason=u"โรบอต: " + data["summary"], expiry=expiry)
         except NotImplementedError:
             return
         summary = u"แจ้งการถูกบล็อก: " + summary
