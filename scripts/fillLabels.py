@@ -26,7 +26,7 @@ def transform(dic):
 def main():
     exlist = [exc.group(1) for exc in
               lre.pats["exc"].finditer(
-              wp.Page(u"ผู้ใช้:Nullzerobot/ปรับปรุงชื่อฉลาก").get())]
+              wp.Page(conf.pageConf).get())]
     pages1, pages2, pages3 = [], [], []
     if not args:
         pywikibot.output("quickscan mode")
@@ -38,91 +38,104 @@ def main():
                 t = pywikibot.Timestamp(year=t.year, month=t.month-1, day=28)
         else:
             t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day-1)
+            
         gen1 = site.recentchanges(start=t, reverse=True, showRedirects=False,
                                   showBot=False, changetype=["new", "edit"],
-                                  namespaces=[0, 4, 10, 14])
+                                  namespaces=conf.namespaces)
         pages1 = [page["title"] for page in gen1]
         gen2 = site.logevents(start=t, reverse=True, logtype="move")
         pages2 = [page.new_title().title() for page in gen2]
     elif args[0] == "-all":
         pywikibot.output("fullscan mode")
-        gen3 = itertools.chain(site.allpages(filterredir=False, start=u"ก"),
-               site.allpages(filterredir=False, start=u"ก", namespace=4),
-               site.allpages(filterredir=False, start=u"ก", namespace=10),
-               site.allpages(filterredir=False, start=u"ก", namespace=14))
+        gen3 = ()
+        for i in conf.namespaces:
+            gen3 = itertools.chain(gen3, site.allpages(filterredir=False,
+                                                       start=u"ก",
+                                                       namespace=i))
         pages3 = [page.title() for page in gen3]
+        pywikibot.output("load all!")
     else:
+        pages1 = [u"หมวดหมู่:ชาววิกิพีเดียรักองค์โสมฯ"]
         pywikibot.output("unknown argument")
-        return
-
+        
     allpages = list(set(filter(lambda x: (ord(u"ก") <= ord(x[0]) <= ord(u"๛")),
                pages1 + pages2 + pages3)))
     datasite = site.data_repository()
-    disamitem = pywikibot.ItemPage(datasite, "Q11651459")
-    thwikiitem = pywikibot.ItemPage(datasite, "Q565074")
-    wrongdisamitem = pywikibot.ItemPage(datasite, "Q4167410")
-    descdisam = u"หน้าแก้ความกำกวมวิกิพีเดีย"
     cnti = 0
     pywikibot.output("processing %d pages" % len(allpages))
+    
+    for check in conf.checklist:
+        if check["detectFromTitle"] is None: check["detectFromTitle"] = "[]" # dummy string which invalid for title
+        for checkClaim in check["claims"]:
+            checkClaim["nameItem"] = pywikibot.ItemPage(datasite, checkClaim["nameItem"])
+            if checkClaim["refItem"] is not None:
+                checkClaim["refItem"] = pywikibot.ItemPage(datasite, checkClaim["refItem"])
+    
     for pages in itergroup(allpages, 100):
         cnti += 1
         pywikibot.output("round %d" % cnti)
         dat = datasite.loadcontent({"sites": site.dbName(),
                                     "titles": "|".join(pages)})
         for i, qitem in enumerate(dat):
-            if not qitem.startswith("q"): continue
+            pywikibot.output("item %d: %s" % (i, qitem))
+            if not qitem.lower().startswith("q"): continue
             item = pywikibot.ItemPage(datasite, qitem)
             item._content = dat[qitem]
             super(pywikibot.ItemPage, item).get() # For getting labels
             data = item.get()
             editdict = {}
-            isdisam = False
-            isdisamtitle = False
-            wrongdisam = None
             page = wp.Page(item.getSitelink(site))
-            if page.title() in exlist:
-                continue
-            if u"(แก้ความกำกวม)" in page.title():
-                isdisamtitle = True
-            if "p107" in data["claims"]:
-                for claim in data["claims"]["p107"]:
-                    if claim.getTarget() == disamitem:
-                        isdisam = True
-                    if claim.getTarget() == wrongdisamitem:
-                        wrongdisam = claim
-            if wrongdisam:
-                pywikibot.output("wrong disam item :(")
-                claim.changeTarget(disamitem)
-                isdisam = True
-            elif (isdisamtitle) and (not isdisam):
-                claim = pywikibot.Claim(datasite, "p107")
-                claim.setTarget(disamitem)
-                claim2 = pywikibot.Claim(datasite, "p143")
-                claim2.setTarget(thwikiitem)
-                item.addClaim(claim)
-                claim.addSource(claim2)
-                pywikibot.output("added claim!")
-                isdisam = True
+            if page.title() in exlist: continue
+            for check in conf.checklist:
+                passCriteria = False
+                description = None
+                if check["detectFromTitle"] in page.title(): passCriteria = True
+                if check["detectFromNamespace"] == page.namespace(): passCriteria = True
+                passAlItem = True
+                for claimCheck in check["claims"]:
+                    passItem = False
+                    if claimCheck["name"] in data["claims"]:
+                        for claim in data["claims"][claimCheck["name"]]:
+                            if claim.getTarget() == claimCheck["nameItem"]:
+                                passItem = True
+                                break
+                                
+                    if not passItem:
+                        passAllItem = False
+                        if passCriteria:
+                            claim = pywikibot.Claim(datasite, claimCheck["name"])
+                            claim.setTarget(claimCheck["nameItem"])
+                            item.addClaim(claim)
+                            if claimCheck["ref"] is not None:
+                                claim2 = pywikibot.Claim(datasite, claimCheck["ref"])
+                                claim2.setTarget(claimCheck["refItem"])
+                                claim.addSource(claim2)
+                            pywikibot.output("added claim!")
+                passCriteria = passCriteria or passAllItem
+                if (description is None) and passCriteria:
+                    description = check["description"]
+                if passCriteria: break
+                          
             oldlabels = None
             if "th" in data["labels"]:
                 oldlabels = data["labels"]["th"]
             labels = lre.pats["rmdisam"].sub("", page.title())
-            if not lre.pats["thai"].search(labels):
-                continue
+            if not lre.pats["thai"].search(labels): continue
             if labels != oldlabels:
                 pywikibot.output("old label: " + unicode(oldlabels))
                 pywikibot.output("new label: " + unicode(labels))
                 editdict["labels"] = labels
-            if isdisam and (("th" in data["descriptions"] and
-                            data["descriptions"]["th"] != descdisam) or
+            if passCriteria and (("th" in data["descriptions"] and
+                            data["descriptions"]["th"] != description) or
                             ("th" not in data["descriptions"])):
-                editdict["descriptions"] = descdisam
+                editdict["descriptions"] = description
             out = transform(editdict)
             if not out:
                 continue
             pywikibot.output("item: " + qitem)
             pywikibot.output("title: " + page.title())
             try:
+                #raw_input("prompt: ...")
                 item.editEntity(out)
             except:
                 wp.error()

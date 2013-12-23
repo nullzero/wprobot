@@ -3,4 +3,4 @@
 This is a user configuration file.
 """
 
-pywikibotDir = "~/rewrite"
+pywikibotDir = "/shared/pywikipedia/core"
