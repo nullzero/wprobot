@@ -43,7 +43,7 @@ def parse(text):
                       .replace("\\n", "\n")
             ).replace("<!-- B1acks1ash dummy -->", "")
 
-def process(text):
+def process(text, page_config):
     global putWithSysop
 
     params = {"find"  : [], "replace"   : [],
@@ -52,20 +52,28 @@ def process(text):
     errorlist = []
     deprecated = []
     checkcat = []
-    for param in lre.pats["param"].finditer(text + "|"):
-        param = param.group(1)
-        key, dat = param.split("=", 1)
-        key = key.strip()
-        dat = dat.strip()
-        if key in conf.translateKey:
-            params[conf.translateKey[key]] = dat
-        else:
-            key = lre.pats["num"].sub("", key)
-            dat = lre.pats["num"].sub("", dat)
-            if key in conf.seriesKey:
-                params[conf.seriesKey[key]].append(dat)
+    try:
+        for param in lre.pats["param"].finditer(text + "|"):
+            param = param.group(1)
+            key, dat = param.split("=", 1)
+            key = key.strip()
+            dat = dat.strip()
+            if key in conf.translateKey:
+                params[conf.translateKey[key]] = dat
             else:
-                error("unknown parameter", param)
+                key = lre.pats["num"].sub("", key)
+                dat = lre.pats["num"].sub("", dat)
+                if key in conf.seriesKey:
+                    params[conf.seriesKey[key]].append(dat)
+                else:
+                    error("unknown parameter", param)
+    except:
+        wp.error()
+        if "source" in params:
+            pywikibot.output(u"Error when updating %s" % params["source"])
+        else:
+            pywikibot.output(u"Error when processing page %s" % page_config)
+        return
 
     if not checkparams(params):
         error("something wrong")
@@ -163,6 +171,11 @@ def process(text):
         page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
     except pywikibot.LockedPage:
         putWithSysop.append((page, text))
+    except:
+        wp.error()
+        pywikibot.output("<!-- Begin error -->")
+        pywikibot.output(text)
+        pywikibot.output("<!-- End error -->")
 
     if checkcat:
         time.sleep(30)
@@ -180,14 +193,15 @@ def process(text):
                     "page": page.title(),
                     "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
                     "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if # มีเดียวิกิ:Scribunto-common-error-category
-                                   page.namespace() == 828 else ""
+                                   page.namespace() == 828 else "",
+                    "page_config": page_config
                 }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
 
 def main():
     pool = lthread.ThreadPool(30)
     for page in site.allpages(prefix=conf.title, content=True, namespace=2):
         for req in lre.pats["entry"].finditer(page.get()):
-            pool.add_task(process, req.group(1))
+            pool.add_task(process, req.group(1), page.title())
     pool.wait_completion()
 
     site.switchuser("Nullzero", False)
