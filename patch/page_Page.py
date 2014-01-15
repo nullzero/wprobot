@@ -364,6 +364,6 @@ def _associatedPage(self):
         ns = self.namespace() + 1
     else:
         ns = self.namespace() - 1
-    return pywikibot.Page(self.site, self.title(withNamespace=False, ns))
+    return pywikibot.Page(self.site, self.title(withNamespace=False), ns)
     
 Page.associatedPage = _associatedPage
