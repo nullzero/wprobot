@@ -64,7 +64,7 @@ def process(pagenow, page, user):
 
     reason = lre.pats["stripcomment"].sub("", deletion.comment()).strip()
     
-    associatedPage = pagenow.associatedPage()
+    associatedPage = pagenow.toggleTalkPage()
     if associatedPage.exists():
         associatedPage.delete(reason=u"โรบอต: ลบหน้าพูดคุยของหน้าที่ถูกลบอัตโนมัติ", prompt=False)
         
