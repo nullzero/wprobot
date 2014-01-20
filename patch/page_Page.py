@@ -356,14 +356,15 @@ def _add_category(self, cats):
 Page.add_category = _add_category
 
 #=======================================================================
-# NEW: associatedPage
+# NEW: parentPage
 #=======================================================================
 
-def _associatedPage(self):
-    if self.namespace() % 2 == 0:
-        ns = self.namespace() + 1
-    else:
-        ns = self.namespace() - 1
-    return pywikibot.Page(self.site, self.title(withNamespace=False), ns)
+def _parentPage(self, level=1):
+    title = self.title()
+    while(level > 0):
+        title, occ = lre.subn("/[^/]*$", "", title)
+        if occ == 0: break
+        level -= 1
+    return Page(title)
     
-Page.associatedPage = _associatedPage
+Page.parentPage = _parentPage

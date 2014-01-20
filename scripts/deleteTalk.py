@@ -16,9 +16,13 @@ def glob():
 def process(lst):
     exist = site.pagesexist([x.toggleTalkPage().title() for x in lst])
     for i, page in enumerate(lst):
-        if "/" in page.title():
-            continue
         if not exist[i][0]:
+            if "/" in page.title():
+                if page.parentPage().toogleTalkPage().exists():
+                    continue
+                elif "manual" not in args:
+                    continue
+                
             if (page.botMayEdit() and
                     (site.getcurrenttime() - page.editTime()).days >= 30):
                 pywikibot.output("deleting " + page.title())

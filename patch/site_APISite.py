@@ -286,7 +286,8 @@ APISite.pagesexist = _pagesexist
 def _parse(self, text):
     r = api.Request(site=self,
                     action="parse",
-                    text=text)
+                    text=text,
+                    contentmodel="wikitext")
     try:
         result = r.submit()
     except:
