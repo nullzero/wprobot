@@ -18,5 +18,6 @@ seriesKey[u"พารามิเตอร์"] = "param"
 seriesKey[u"แปล"] = "translate"
 seriesKey[u"ล้าสมัย"] = "depr"
 seriesKey[u"แทนที่ล้าสมัย"] = "rdepr"
+seriesKey[u"ผิดพลาดล้าสมัย"] = "errordepr"
 
 yes = u"ใช่"

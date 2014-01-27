@@ -118,47 +118,6 @@ def _change_category(self, oldCat, newCat, comment=None, sortKey=None,
 Page.change_category = _change_category
 
 #=======================================================================
-# Support blank and mark parameter
-#=======================================================================
-
-def _delete(self, reason=None, prompt=True, throttle=None,
-            mark=False, blank=False):
-    """Deletes the page from the wiki. Requires administrator status.
-
-    @param reason: The edit summary for the deletion. If None, ask for it.
-    @param prompt: If true, prompt user for confirmation before deleting.
-    @param mark: if true, and user does not have sysop rights, place a
-        speedy-deletion request on the page instead.
-
-    """
-    # TODO: add support for mark
-    if reason is None:
-        pywikibot.output(u'Deleting %s.' % (self.title(asLink=True)))
-        reason = pywikibot.input(u'Please enter a reason for the deletion:')
-    answer = u'y'
-    if prompt and not hasattr(self.site, '_noDeletePrompt'):
-        answer = pywikibot.inputChoice(u'Do you want to delete %s?'
-                    % self.title(asLink = True, forceInterwiki = True),
-                                       ['Yes', 'No', 'All'],
-                                       ['Y', 'N', 'A'],
-                                       'N')
-        if answer in ['a', 'A']:
-            answer = 'y'
-            self.site._noDeletePrompt = True
-    if answer in ['y', 'Y']:
-        try:
-            return self.site.deletepage(self, reason)
-        except pywikibot.NoUsername, e:
-            if mark: # >>HERE<<
-                text = self.get(get_redirect=True)
-                self.put(u'{{speedydelete|1=%s --~~~~|bot=yes}}\n\n%s' %
-                        (reason, "" if blank else text), comment=reason)
-            else:
-                raise e
-
-Page.delete = _delete
-
-#=======================================================================
 # add onlyInclude in order to find including of explicitly category
 #=======================================================================
 

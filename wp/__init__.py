@@ -173,6 +173,17 @@ def posterror():
         raise RuntimeError
 
 def handlearg(start, arg):
+    """This function determines whether the specified argument matches
+    required name. If a list is sent, the function will check all 
+    elements and return the first matching"""
+    if isinstance(arg, list):
+        for item in arg:
+            result = handlearg(item)
+            if result is not None:
+                return result
+        return None
+    if arg == "-" + start:
+        return True
     if arg.startswith("-" + start + ":"):
         return arg[2 + len(start):]
     else:

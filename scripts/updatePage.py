@@ -31,10 +31,12 @@ def error(e, desc=None):
     # NotImplemented
     pywikibot.output("E: " + e)
     if desc:
-        pywikibot.output(">>> " + desc)
+        pywikibot.output(">>> " + str(desc))
 
 def parse(text):
-    if not (text[0] == '"' and text[-1] == '"'): error()
+    if not (text[0] == '"' and text[-1] == '"'):
+        error("not begin or end with double quote", text)
+        sys.exit()
     return (text[1:-1].replace("\\\\", "<!-- B1acks1ash dummy -->\\"
                                        "<!-- B1acks1ash dummy -->")
                       .replace("\\{", "{")
@@ -46,9 +48,10 @@ def parse(text):
 def process(text, page_config):
     global putWithSysop
 
-    params = {"find"  : [], "replace"   : [],
-              "param" : [], "translate" : [],
-              "depr"  : [], "rdepr"     : []}
+    params = {}
+    for key in conf.seriesKey:
+        params[conf.seriesKey[key]] = []
+
     errorlist = []
     deprecated = []
     checkcat = []
@@ -61,10 +64,10 @@ def process(text, page_config):
             if key in conf.translateKey:
                 params[conf.translateKey[key]] = dat
             else:
+                num = lre.pats["num"].find(key)
                 key = lre.pats["num"].sub("", key)
-                dat = lre.pats["num"].sub("", dat)
                 if key in conf.seriesKey:
-                    params[conf.seriesKey[key]].append(dat)
+                    params[conf.seriesKey[key]].append((num, dat))
                 else:
                     error("unknown parameter", param)
     except:
@@ -85,6 +88,7 @@ def process(text, page_config):
     source = wp.Page(params["source"])
     page = wp.Page(params["page"])
     today = site.getcurrenttime()
+    originalText = page.get() if page.exists() else None
 
     if ("stable" in params and (today - pywikibot.Timestamp.fromISOformat(
                     source.getVersionHistory(total=1)[0][1])).days <
@@ -97,10 +101,10 @@ def process(text, page_config):
 
     #=======
 
-    for i, sfind in enumerate(params["find"]):
-        newtext = text.replace(parse(sfind), parse(params["replace"][i]))
-        if newtext == text and sfind != params["replace"][i]:
-            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ %d" % (i + 1))
+    for i, (num, sfind) in enumerate(params["find"]):
+        newtext = text.replace(parse(sfind), parse(params["replace"][i][1]))
+        if newtext == text and sfind != params["replace"][i][1]:
+            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ {0}".format(num))
         text = newtext
 
     def matchbrace(s, i):
@@ -112,7 +116,7 @@ def process(text, page_config):
                 return i
                 # not return i + 1 to avoid index out of range
 
-    for irep, sp in enumerate(params["param"]):
+    for irep, (num, sp) in enumerate(params["param"]):
         lst = []
         for i in lre.finditer(r"\{\{\{\s*" + sp + "\s*[\|\}]", text):
             begin, end = i.span()
@@ -126,7 +130,7 @@ def process(text, page_config):
         for i in xrange(len(text)):
             if i == lst[ilst][0]:
                 if lst[ilst][1] == "begin":
-                    out.append("{{{" + params["translate"][irep] + "|")
+                    out.append("{{{" + params["translate"][irep][1] + "|")
                 else:
                     out.append("}}}")
                     # we should put text[i] before "}}}",
@@ -135,33 +139,31 @@ def process(text, page_config):
             out.append(text[i])
         newtext = "".join(out)
         if newtext == text:
-            errorlist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ %d" %
-                            (irep + 1))
+            errorlist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ {0}".format(num))
         text = newtext
 
-    for i, sdepr in enumerate(params["depr"]):
+    for i, (num, sdepr) in enumerate(params["depr"]):
         category = wp.Category("Category:" + page.title().replace(":", "") +
-                               u"ที่ใช้พารามิเตอร์" + sdepr)
+                               u" ที่ใช้พารามิเตอร์ " + sdepr)
         checkcat.append(category)
-        deprecated.append(u'<includeonly>{{#if:{{{%(depr)s|}}}|[[%(cat)s]]'
-                          u'<span class="error">พารามิเตอร์ %(depr)s '
-                          u'ล้าสมัยแล้ว โปรดใช้ %(rdepr)s แทนที่</span><br />'
-                          u'}}</includeonly>'
-            % { "depr": sdepr,
-                "rdepr": params["rdepr"][i],
-                "cat": category.title(),
-            })
+        deprecated.append(u'<includeonly>{{{{#if:{{{{{{{depr}|}}}}}}|[[{cat}]]'
+                          .format(depr=sdepr, cat=category.title()) +            
+                          ((u'<span class="error">พารามิเตอร์ {depr} '
+                          u'ล้าสมัยแล้ว โปรดใช้ {rdepr} แทนที่</span><br />')
+                          .format(depr=sdepr, rdepr=params["rdepr"][i][1])
+                          if (params["errordepr"][i][1] == conf.yes) else u'') +
+                          u'}}</includeonly>')
     text = "".join(deprecated) + text
 
     #=======
 
-    if (not errorlist) and (text == page.get()):
+    if (not errorlist) and (text == originalText):
         pywikibot.output(u"ไม่มีการเปลี่ยนแปลงในหน้า %s; "
                          u"ยกเลิกการปรับปรุงและแจ้งเตือน" % source.title())
         return
 
     if debug:
-        pywikibot.showDiff(page.get(), text)
+        pywikibot.showDiff(originalText or "", text)
         return
 
     if "sandbox" in params and params["sandbox"] == conf.yes:
@@ -169,7 +171,7 @@ def process(text, page_config):
 
     try:
         page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
-    except pywikibot.LockedPage:
+    except (pywikibot.LockedPage, pywikibot.PageNotSaved):
         putWithSysop.append((page, text))
     except:
         wp.error()
@@ -199,14 +201,26 @@ def process(text, page_config):
 
 def main():
     pool = lthread.ThreadPool(30)
-    for page in site.allpages(prefix=conf.title, content=True, namespace=2):
+    gen = []
+    page = wp.handlearg("page", args)
+    if page is not None:
+        gen = [wp.Page(page)]
+    else:
+        gen = site.allpages(prefix=conf.title, content=True, namespace=2)
+    for page in gen:
         for req in lre.pats["entry"].finditer(page.get()):
             pool.add_task(process, req.group(1), page.title())
     pool.wait_completion()
 
     site.switchuser("Nullzero", False)
     for (page, text) in putWithSysop:
-        page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
+        try:
+            page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
+        except:
+            wp.error()
+            pywikibot.output("<!-- Begin error -->")
+            pywikibot.output(text)
+            pywikibot.output("<!-- End error -->")
 
 if __name__ == "__main__":
     args, site, conf = wp.pre(-2, lock=True)

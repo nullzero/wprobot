@@ -10,7 +10,7 @@ import wp
 import pywikibot
 
 def main():
-    pass
+    wp.Page(u"User talk:Nullzero/กระบะทราย").delete(reason="asd", prompt=False)
     
 if __name__ == "__main__":
     args, site, conf = wp.pre(0)

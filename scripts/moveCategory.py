@@ -130,11 +130,9 @@ class CategoryMoveRobot:
         if copied:
             ltime.sleep(15)
             if self.oldCat.isEmptyCategory():
-                self.oldCat.delete(reason, prompt=False,
-                                   mark=True, blank=True)
+                self.oldCat.delete(reason, prompt=False, mark=True)
                 if oldMovedTalk is not None:
-                    oldMovedTalk.delete(reason, prompt=False,
-                                        mark=True, blank=True)
+                    oldMovedTalk.delete(reason, prompt=False, mark=True)
             else:
                 pywikibot.output('Couldn\'t delete %s - not empty.'
                                  % self.oldCat.title())
@@ -175,7 +173,7 @@ def appendTable(title, arr):
 
 def main():
     """Main function"""
-    if conf.pendingParam in args:
+    if handlearg("pending", args):
         pywikibot.output("move pending entry")
         title = conf.pageMinor
         operation = "minor"
