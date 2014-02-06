@@ -21,6 +21,7 @@ def glob():
     lre.pats["param"] = lre.lre(r"(?s)\|\s*((?:\{\{.*?\}\}|.)*?)\s*(?=\|)")
     lre.pats["num"] = lre.lre(r"\d+$")
     lre.pats["user0"] = lre.lre(r"\{\{User0\|(.*?)\}\}")
+    lre.pats["trimComment"] = lre.lre(r"<!--#(.*?)#-->")
     putWithSysop = []
 
 def checkparams(params):
@@ -31,19 +32,18 @@ def error(e, desc=None):
     # NotImplemented
     pywikibot.output("E: " + e)
     if desc:
-        pywikibot.output(">>> " + str(desc))
+        pywikibot.output(">>> " + unicode(desc))
 
 def parse(text):
     if not (text[0] == '"' and text[-1] == '"'):
         error("not begin or end with double quote", text)
         sys.exit()
-    return (text[1:-1].replace("\\\\", "<!-- B1acks1ash dummy -->\\"
-                                       "<!-- B1acks1ash dummy -->")
-                      .replace("\\{", "{")
-                      .replace("\\}", "}")
-                      .replace("\\!", "|")
-                      .replace("\\n", "\n")
-            ).replace("<!-- B1acks1ash dummy -->", "")
+    return lre.pats["trimComment"].sub("", 
+            (text[1:-1].replace("\\\\", "<!--##-->\\<!--##-->")
+                        .replace("\\{", "{")
+                        .replace("\\}", "}")
+                        .replace("\\!", "|")
+                        .replace("\\n", "\n")))
 
 def process(text, page_config):
     global putWithSysop

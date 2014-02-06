@@ -11,11 +11,15 @@ import init
 import wp
 import pywikibot
 from wp import lthread
+from pywikibot.data import api
 
 def glob():
     pass
 
 def main():
+    r = api.Request(site=self.site, action="query", list="allfileusages", title=self.title(),
+                    appendtext=text, summary=comment, token=token)
+    '''
     for page in site.allpages(namespace=10):
         has = False
         for t in page.embeddedin():
@@ -28,6 +32,8 @@ def main():
             if "/doc" in page.title():
                 page.delete(reason=u"โรบอต: หน้าเปลี่ยนทางไม่จำเป็น", prompt=False)
             """
+    '''
+    
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("detect unused templates")
