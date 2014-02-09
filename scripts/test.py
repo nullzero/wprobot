@@ -10,8 +10,9 @@ import wp
 import pywikibot
 
 def main():
-    #wp.Page(u"User talk:Nullzero/กระบะทราย").delete(reason="asd", prompt=False)
-    wp.Page(u"User talk:Nullzero/กระบะทราย").move(u"User talk:Nullzero/กระบะทราย3", "test")
+    wp.Page(u"User:Nullzero/กระบะทราย").put("asdasdasd", "dsadsadsa", sysop=True)
+    wp.Page(u"User:Nullzero/กระบะทราย").put("asdasdasddsa", "dsasdadsadsa")
+    #wp.Page(u"User talk:Nullzero/กระบะทราย").move(u"User talk:Nullzero/กระบะทราย3", "test")
     
 if __name__ == "__main__":
     args, site, conf = wp.pre(0)

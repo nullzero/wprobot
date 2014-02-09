@@ -391,16 +391,6 @@ def _abuselog(self, start=None, step=None, total=None, reverse=False,
 
 APISite.abuselog = _abuselog
 
-#=======================================================================
-# Support for switching users in only one program
-#=======================================================================
-def _switchuser(self, user, sysop=False):
-    self.logout()
-    self._username[sysop] = user
-    self.login(sysop)
-
-APISite.switchuser = _switchuser
-
 ########################################################################
 ########################################################################
 ########################################################################

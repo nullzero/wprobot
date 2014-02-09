@@ -15,14 +15,12 @@ from wp import lre, lnotify, lthread, ltime
 debug = False
 
 def glob():
-    global putWithSysop
     lre.pats["entry"] = lre.lre(ur"(?sm)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*"
                                 ur"((?:\{\{.*?\}\}|.)*?)\s*\}\}")
     lre.pats["param"] = lre.lre(r"(?s)\|\s*((?:\{\{.*?\}\}|.)*?)\s*(?=\|)")
     lre.pats["num"] = lre.lre(r"\d+$")
     lre.pats["user0"] = lre.lre(r"\{\{User0\|(.*?)\}\}")
     lre.pats["trimComment"] = lre.lre(r"<!--#(.*?)#-->")
-    putWithSysop = []
 
 def checkparams(params):
     # NotImplemented
@@ -169,11 +167,19 @@ def process(text, page_config):
     if "sandbox" in params and params["sandbox"] == conf.yes:
         page = wp.Page(page.title() + "/sandbox")
 
+    printError = False
+    
     try:
         page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
     except (pywikibot.LockedPage, pywikibot.PageNotSaved):
-        putWithSysop.append((page, text))
+        try:
+            page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop')
+        except:
+            printError = True
     except:
+        printError = True
+    
+    if printError:
         wp.error()
         pywikibot.output("<!-- Begin error -->")
         pywikibot.output(text)
@@ -211,16 +217,6 @@ def main():
         for req in lre.pats["entry"].finditer(page.get()):
             pool.add_task(process, req.group(1), page.title())
     pool.wait_completion()
-
-    site.switchuser("Nullzero", False)
-    for (page, text) in putWithSysop:
-        try:
-            page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
-        except:
-            wp.error()
-            pywikibot.output("<!-- Begin error -->")
-            pywikibot.output(text)
-            pywikibot.output("<!-- End error -->")
 
 if __name__ == "__main__":
     args, site, conf = wp.pre(-2, lock=True)
