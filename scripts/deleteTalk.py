@@ -20,7 +20,7 @@ def process(lst):
             if "/" in page.title():
                 if page.parentPage().toogleTalkPage().exists():
                     continue
-                elif "manual" not in args:
+                elif wp.handlearg("manual", args):
                     continue
                 
             if (page.botMayEdit() and

@@ -173,7 +173,7 @@ def appendTable(title, arr):
 
 def main():
     """Main function"""
-    if handlearg("pending", args):
+    if wp.handlearg("pending", args):
         pywikibot.output("move pending entry")
         title = conf.pageMinor
         operation = "minor"
