@@ -76,8 +76,8 @@ remove(){
         echo "$>> ปลดล็อกแล้ว"
         ;;
     "pyc")
-        find . -type f | grep -P "\.pyc$" | xargs rm
-        find . -type f | grep -P "\.pyo$" | xargs rm
+        find . -type f | grep "\.pyc$" | xargs rm
+        find . -type f | grep "\.pyo$" | xargs rm
         echo "$>> ลบไฟล์ pyc เรียบร้อย"
         ;;
     "git")

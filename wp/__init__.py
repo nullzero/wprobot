@@ -97,7 +97,8 @@ def pre(taskid=-1, lock=None, sites=[], continuous=False):
     args = pywikibot.handleArgs() # must be called before getSite()
     site = pywikibot.getSite()
     info["site"] = site
-
+    
+    """
     if sites == True:
         _login(config.usernames)
         _login(config.sysopnames, sysop=True)
@@ -105,6 +106,7 @@ def pre(taskid=-1, lock=None, sites=[], continuous=False):
         _login({site.family.name: {site.code: None}})
         for isite in sites:
             _login({isite.family.name: {isite.code: None}})
+    """
 
     confpath = simplifypath([os.environ["WPROBOT_DIR"], "conf",
                             info["basescript"]])

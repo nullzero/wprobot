@@ -17,7 +17,7 @@ def glob():
     pass
 
 def main():
-    r = api.Request(site=self.site, action="query", list="allfileusages", title=self.title(),
+    r = api.Request(site=site, action="query", list="allfileusages", title=self.title(),
                     appendtext=text, summary=comment, token=token)
     '''
     for page in site.allpages(namespace=10):

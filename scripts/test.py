@@ -8,14 +8,16 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import wp
 import pywikibot
+from pywikibot.data import api
 
 def main():
-    wp.Page(u"User:Nullzero/กระบะทราย").put("asdasdasd", "dsadsadsa", sysop=True)
-    wp.Page(u"User:Nullzero/กระบะทราย").put("asdasdasddsa", "dsasdadsadsa")
-    #wp.Page(u"User talk:Nullzero/กระบะทราย").move(u"User talk:Nullzero/กระบะทราย3", "test")
+    site.login(False)
+    print site.user()
+    print api.Request(site=pywikibot.getSite("th"), action='query', meta='allmessages|siteinfo', 
+                      ammessages="abusefilter-accountreserved|january").submit()
     
 if __name__ == "__main__":
-    args, site, conf = wp.pre(0)
+    args, site, conf = wp.pre(12)
     try:
         main()
     except:
