@@ -167,7 +167,7 @@ def process(text, page_config):
     if "sandbox" in params and params["sandbox"] == conf.yes:
         page = wp.Page(page.title() + "/sandbox")
 
-    printError = False
+    foundError = False
     
     try:
         page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
@@ -175,15 +175,16 @@ def process(text, page_config):
         try:
             page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop')
         except:
-            printError = True
+            foundError = True
     except:
-        printError = True
+        foundError = True
     
-    if printError:
-        wp.error()
+    if foundError:
         pywikibot.output("<!-- Begin error -->")
         pywikibot.output(text)
         pywikibot.output("<!-- End error -->")
+        errorlist.append(u"ผิดพลาด: ไม่เกิดการเขียนหน้า <pre>{}</pre>".format(sys.exc_info()[0]))
+        wp.error()
 
     if checkcat:
         time.sleep(30)
@@ -202,7 +203,8 @@ def process(text, page_config):
                     "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
                     "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if # มีเดียวิกิ:Scribunto-common-error-category
                                    page.namespace() == 828 else "",
-                    "page_config": page_config
+                    "page_config": page_config,
+                    "revision": page.latestRevision(),
                 }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
 
 def main():

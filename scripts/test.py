@@ -11,10 +11,9 @@ import pywikibot
 from pywikibot.data import api
 
 def main():
-    site.login(False)
-    print site.user()
-    print api.Request(site=pywikibot.getSite("th"), action='query', meta='allmessages|siteinfo', 
-                      ammessages="abusefilter-accountreserved|january").submit()
+    #print list(pywikibot.Page(pywikibot.getSite("af"), "Maan").iterlanglinks())
+    for i in (site._generator(api.PageGenerator, type_arg="langbacklinks", lbllang="aa")):
+        print i
     
 if __name__ == "__main__":
     args, site, conf = wp.pre(12)
