@@ -180,7 +180,7 @@ def handlearg(start, arg):
     elements and return the first matching"""
     if isinstance(arg, list):
         for item in arg:
-            result = handlearg(item)
+            result = handlearg(start, item)
             if result is not None:
                 return result
         return None

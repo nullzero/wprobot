@@ -15,16 +15,7 @@ from wp import lre, lnotify, lthread, ltime
 debug = False
 
 def glob():
-    lre.pats["entry"] = lre.lre(ur"(?sm)\{\{\s*แจ้งปรับปรุงหน้าอัตโนมัติ\s*"
-                                ur"((?:\{\{.*?\}\}|.)*?)\s*\}\}")
-    lre.pats["param"] = lre.lre(r"(?s)\|\s*((?:\{\{.*?\}\}|.)*?)\s*(?=\|)")
-    lre.pats["num"] = lre.lre(r"\d+$")
-    lre.pats["user0"] = lre.lre(r"\{\{User0\|(.*?)\}\}")
     lre.pats["trimComment"] = lre.lre(r"<!--#(.*?)#-->")
-
-def checkparams(params):
-    # NotImplemented
-    return True
 
 def error(e, desc=None):
     # NotImplemented
@@ -33,76 +24,44 @@ def error(e, desc=None):
         pywikibot.output(">>> " + unicode(desc))
 
 def parse(text):
-    if not (text[0] == '"' and text[-1] == '"'):
-        error("not begin or end with double quote", text)
-        sys.exit()
-    return lre.pats["trimComment"].sub("", 
-            (text[1:-1].replace("\\\\", "<!--##-->\\<!--##-->")
-                        .replace("\\{", "{")
-                        .replace("\\}", "}")
-                        .replace("\\!", "|")
-                        .replace("\\n", "\n")))
+    return lre.pats["trimComment"].sub("", text)
 
-def process(text, page_config):
-    global putWithSysop
-
-    params = {}
-    for key in conf.seriesKey:
-        params[conf.seriesKey[key]] = []
-
-    errorlist = []
-    deprecated = []
-    checkcat = []
-    try:
-        for param in lre.pats["param"].finditer(text + "|"):
-            param = param.group(1)
-            key, dat = param.split("=", 1)
-            key = key.strip()
-            dat = dat.strip()
-            if key in conf.translateKey:
-                params[conf.translateKey[key]] = dat
-            else:
-                num = lre.pats["num"].find(key)
-                key = lre.pats["num"].sub("", key)
-                if key in conf.seriesKey:
-                    params[conf.seriesKey[key]].append((num, dat))
-                else:
-                    error("unknown parameter", param)
-    except:
-        wp.error()
-        if "source" in params:
-            pywikibot.output(u"Error when updating %s" % params["source"])
-        else:
-            pywikibot.output(u"Error when processing page %s" % page_config)
-        return
-
-    if not checkparams(params):
-        error("something wrong")
-        return
-
-    if "disable" in params and params["disable"] == conf.yes:
-        return
-
-    source = wp.Page(params["source"])
-    page = wp.Page(params["page"])
+def process(page, config):
+    if config.get('disable', False): return
+    
+    source = wp.Page(config["source"])
     today = site.getcurrenttime()
     originalText = page.get() if page.exists() else None
 
-    if ("stable" in params and (today - pywikibot.Timestamp.fromISOformat(
+    if ("stable" in config and (today - pywikibot.Timestamp.fromISOformat(
                     source.getVersionHistory(total=1)[0][1])).days <
-                    int(params["stable"])):
+                    int(config["stable"])):
         return
+        
+    errorlist = []
+    deprecated = []
+    checkcat = []
 
-    params["notifyuser"] = [lre.pats["user0"].find(x.strip(), 1)
-                            for x in params["notifyuser"].split("\n")]
     text = source.get()
 
     #=======
 
-    for i, (num, sfind) in enumerate(params["find"]):
-        newtext = text.replace(parse(sfind), parse(params["replace"][i][1]))
-        if newtext == text and sfind != params["replace"][i][1]:
-            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ {0}".format(num))
+    for item in config["findText"]:
+        if len(item) == 3:
+            num, find, replace = item
+            regex = False
+        elif len(item) == 4:
+            num, find, replace, regex = item
+        else:
+            errorlist.append(u"คำเตือน: ข้อความค้นหาและแทนที่อันดับที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
+            continue
+        
+        if regex:
+            newtext = lre.sub(find, replace, text)
+        else:
+            newtext = text.replace(find, replace)
+        if newtext == text and find != replace:
+            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ {}".format(num))
         text = newtext
 
     def matchbrace(s, i):
@@ -114,9 +73,15 @@ def process(text, page_config):
                 return i
                 # not return i + 1 to avoid index out of range
 
-    for irep, (num, sp) in enumerate(params["param"]):
+    for item in config["addParam"]:
+        if len(item) == 3:
+            num, param, translate = item
+        else:
+            errorlist.append(u"คำเตือน: ข้อความแปลที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
+            continue
+
         lst = []
-        for i in lre.finditer(r"\{\{\{\s*" + sp + "\s*[\|\}]", text):
+        for i in lre.finditer(r"\{\{\{\s*" + param + "\s*[\|\}]", text):
             begin, end = i.span()
             end = matchbrace(text, begin)
             lst.append((begin, "begin"))
@@ -128,7 +93,7 @@ def process(text, page_config):
         for i in xrange(len(text)):
             if i == lst[ilst][0]:
                 if lst[ilst][1] == "begin":
-                    out.append("{{{" + params["translate"][irep][1] + "|")
+                    out.append("{{{" + translate + "|")
                 else:
                     out.append("}}}")
                     # we should put text[i] before "}}}",
@@ -137,48 +102,57 @@ def process(text, page_config):
             out.append(text[i])
         newtext = "".join(out)
         if newtext == text:
-            errorlist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ {0}".format(num))
+            errorlist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ {}".format(num))
         text = newtext
-
-    for i, (num, sdepr) in enumerate(params["depr"]):
+    
+    for item in config["obsolete"]:
+        if len(item) == 3:
+            num, oldParam, newParam = item
+            showError = False
+        elif len(item) == 4:
+            num, oldParam, newParam, showError = item
+        else:
+            errorlist.append(u"คำเตือน: การตรวจสอบพารามิเตอร์ล้าสมัยที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
+            continue
+            
         category = wp.Category("Category:" + page.title().replace(":", "") +
-                               u" ที่ใช้พารามิเตอร์ " + sdepr)
+                               u" ที่ใช้พารามิเตอร์ " + oldParam)
         checkcat.append(category)
-        deprecated.append(u'<includeonly>{{{{#if:{{{{{{{depr}|}}}}}}|[[{cat}]]'
-                          .format(depr=sdepr, cat=category.title()) +            
-                          ((u'<span class="error">พารามิเตอร์ {depr} '
-                          u'ล้าสมัยแล้ว โปรดใช้ {rdepr} แทนที่</span><br />')
-                          .format(depr=sdepr, rdepr=params["rdepr"][i][1])
-                          if (params["errordepr"][i][1] == conf.yes) else u'') +
+        deprecated.append(u'<includeonly>{{{{#if:{{{{{{{}|}}}}}}|[[{}]]'
+                          .format(oldParam, category.title()) +            
+                          ((u'<span class="error">พารามิเตอร์ {} '
+                          u'ล้าสมัยแล้ว โปรดใช้ {} แทนที่</span><br />')
+                          .format(oldParam, newParam)
+                          if showError else u'') +
                           u'}}</includeonly>')
     text = "".join(deprecated) + text
 
     #=======
-
     if (not errorlist) and (text == originalText):
-        pywikibot.output(u"ไม่มีการเปลี่ยนแปลงในหน้า %s; "
-                         u"ยกเลิกการปรับปรุงและแจ้งเตือน" % source.title())
+        pywikibot.output((u"ไม่มีการเปลี่ยนแปลงในหน้า {}; "
+                          u"ยกเลิกการปรับปรุงและแจ้งเตือน").format(source.title()))
         return
-
+        
     if debug:
         pywikibot.showDiff(originalText or "", text)
         return
 
-    if "sandbox" in params and params["sandbox"] == conf.yes:
+    if config.get("sandbox", False):
         page = wp.Page(page.title() + "/sandbox")
 
+    
     foundError = False
     
     try:
-        page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
+        page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", async=True)
     except (pywikibot.LockedPage, pywikibot.PageNotSaved):
         try:
-            page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop')
+            page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop', async=True)
         except:
             foundError = True
     except:
         foundError = True
-    
+
     if foundError:
         pywikibot.output("<!-- Begin error -->")
         pywikibot.output(text)
@@ -190,35 +164,31 @@ def process(text, page_config):
         time.sleep(30)
         for cat in checkcat:
             if cat.isEmptyCategory():
-                errorlist.append(u"[[:%s]] ว่างลงแล้ว "
-                                 u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
-                                 u"คุณอาจเขียนคู่มือการใช้งานใหม่"
-                                 u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก" %
-                                 cat.title())
+                errorlist.append((u"[[:{}]] ว่างลงแล้ว "
+                                  u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
+                                  u"คุณอาจเขียนคู่มือการใช้งานใหม่"
+                                  u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก").format(cat.title())
 
-    #for user in params["notifyuser"]:
+    #for user in config["notifyuser"]:
     for user in ["Nullzero"]:
         lnotify.notify("updatePage", wp.User(user).getUserTalkPage(), {
                     "page": page.title(),
                     "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
                     "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if # มีเดียวิกิ:Scribunto-common-error-category
                                    page.namespace() == 828 else "",
-                    "page_config": page_config,
+                    "page_config": conf.title,
                     "revision": page.latestRevision(),
                 }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
-
+        
 def main():
-    pool = lthread.ThreadPool(30)
-    gen = []
-    page = wp.handlearg("page", args)
-    if page is not None:
-        gen = [wp.Page(page)]
-    else:
-        gen = site.allpages(prefix=conf.title, content=True, namespace=2)
-    for page in gen:
-        for req in lre.pats["entry"].finditer(page.get()):
-            pool.add_task(process, req.group(1), page.title())
-    pool.wait_completion()
+    config = wp.ReadCode(wp.Page(conf.title), "config")
+    config.load()
+    config = config.data
+    updateList = [wp.handlearg("page", args)]
+    if not updateList[0]:
+        updateList = config.keys()
+    for title in updateList:
+        process(wp.Page(title), config[title])
 
 if __name__ == "__main__":
     args, site, conf = wp.pre(-2, lock=True)
