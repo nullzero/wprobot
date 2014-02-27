@@ -369,6 +369,7 @@ def _getLang(self, pages):
 
 APISite.getLang = _getLang
 
+@must_be(group='user')
 def _abuselog(self, start=None, step=None, total=None, reverse=False,
               abuseid=None
              #prefix="", namespace=0, filterredir=None,
@@ -376,7 +377,6 @@ def _abuselog(self, start=None, step=None, total=None, reverse=False,
              #protect_type=None, protect_level=None,
              #includeredirects=None, content=False):
              ):
-    self.login(sysop=True)
     apgen = self._generator(api.ListGenerator, type_arg="abuselog",
                             step=step, total=total)
     if abuseid is not None:
@@ -390,6 +390,131 @@ def _abuselog(self, start=None, step=None, total=None, reverse=False,
     return apgen
 
 APISite.abuselog = _abuselog
+
+#=======================================================================
+# New: appendpage
+#=======================================================================
+
+@must_be(group='user')
+def _appendpage(self, page, text, comment="", minorEdit=True, botflag=True,
+                nocreate=True):
+    token = self.token(page, "edit")
+    r = api.Request(site=self, action="edit", title=page.title(),
+                    appendtext=text, summary=comment, token=token)
+
+    if minorEdit:
+        r["minor"] = ""
+
+    if botflag:
+        r["bot"] = ""
+
+    if nocreate:
+        r["nocreate"] = ""
+
+    try:
+        r.submit()
+    except:
+        wp.error()
+    else:
+        pywikibot.output(u"[[{}]] is appended".format(page.title()))
+
+APISite.appendpage = _appendpage
+
+'''
+#=======================================================================
+# protect
+#=======================================================================
+
+@must_be(group='sysop')
+def _protect(self, page, edit, move, summary, expiry=None):
+    """(Un)protect a wiki page. Requires administrator status.
+
+    Valid protection levels (in MediaWiki 1.12) are '' (equivalent to
+    'none'), 'autoconfirmed', and 'sysop'.
+
+    @param edit: Level of edit protection
+    @param move: Level of move protection
+    @param unprotect: If true, unprotect the page (equivalent to setting
+        all protection levels to '')
+    @param reason: Edit summary.
+    @param prompt: If true, ask user for confirmation.
+
+    """
+    token = self.token(page, "protect")
+    self.lock_page(page)
+    req = api.Request(site=self, action="protect", token=token,
+                      title=page.title(withSection=False),
+                      protections="edit=" + edit + "|" + "move=" + move,
+                      reason=summary)
+    if isinstance(expiry, pywikibot.Timestamp):
+        expiry = expiry.toISOformat()
+    if expiry:
+        req['expiry'] = expiry
+    try:
+        result = req.submit()
+    except api.APIError as err:
+        errdata = {
+            'site': self,
+            'title': page.title(withSection=False),
+            'user': self.user(),
+            'level-edit': edit,
+            'level-move': move
+        }
+        if err.code in self._protect_errors:
+            raise Error(self._protect_errors[err.code] % errdata)
+        pywikibot.debug(u"protect: Unexpected error code '%s' received."
+                        % err.code,
+                        _logger)
+        raise
+    finally:
+        self.unlock_page(page)
+
+APISite.protect = _protect
+'''
+
+@must_be(group='sysop')
+def _protect(self, page, summary, locktype=None, expiry=None, level=None):
+    level = level or "sysop"
+    locktype = locktype or "edit"
+    token = self.token(page, "protect")
+    self.lock_page(page)
+    req = api.Request(site=self, action="protect", token=token,
+                      title=page.title(withSection=False),
+                      reason=summary, protections=locktype+"="+level)
+    if expiry:
+        req["expiry"] = expiry
+    try:
+        result = req.submit()
+    except api.APIError, err:
+        errdata = {
+            'site': self,
+            'title': page.title(withSection=False),
+            'user': self.user(),
+        }
+        pywikibot.output(u"protect: error code '%s' received (%s)."
+                          % (err.code, unicode(errdata)))
+        raise
+    finally:
+        self.unlock_page(page)
+
+APISite.protect = _protect
+
+@deprecate_arg("number", None)
+@deprecate_arg("repeat", None)
+def _mostrevisionspages(self, step=None, total=None):
+    """Yield Pages and lengths from Special:Mostrevisions.
+
+    Yields a tuple of Page object, revisions(int).
+
+    """
+    mrpgen = self._generator(api.ListGenerator,
+                            type_arg="querypage", qppage="Mostrevisions",
+                            step=step, total=total)
+    for pageitem in mrpgen:
+        yield (pywikibot.Page(self, pageitem['title']),
+               int(pageitem['value']))
+
+APISite.mostrevisionspages = _mostrevisionspages
 
 ########################################################################
 ########################################################################

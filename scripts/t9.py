@@ -95,20 +95,21 @@ def process(pagenow, page, user):
         site.login()
 
 def main():
-    checkPage = None
-    if args:
-        page = wp.Page(wp.toutf(args[0]))
-        if len(args) > 1:
-            checkPage = wp.Page(wp.toutf(args[1]))
+    page = wp.handlearg("page", args)
+    if page:
+        page = wp.Page(page)
         dic = page.getVersionHistory(reverseOrder=True, total=1)
         gen = [{"user": dic[0][2], "title": page.title()}]
+        check = wp.handlearg("check", args)
+        if check:
+            check = wp.Page(check)
     else:
         gen = lrepeat.repeat(site, site.recentchanges, lambda x: x["revid"],
                              60, showRedirects=False, changetype=["new"],
                              showBot=False, namespaces=[0])
     for rev in gen:
         try:
-            process(wp.Page(rev["title"]), checkPage, wp.User(rev["user"]))
+            process(wp.Page(rev["title"]), check, wp.User(rev["user"]))
         except:
             wp.error()
 

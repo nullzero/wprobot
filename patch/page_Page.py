@@ -8,11 +8,11 @@ from wp import ltime
 from wp import lre
 
 #=======================================================================
-# add onlyInclude in order to find including of explicitly category
+# add fromtext in order to find including of explicitly category
 #=======================================================================
 
 def _categories(self, withSortKey=False, step=None, total=None,
-               content=False, onlyInclude=False):
+               content=False, fromtext=False):
     """Iterate categories that the article is in.
 
     @param withSortKey: if True, include the sort key in each Category.
@@ -23,17 +23,11 @@ def _categories(self, withSortKey=False, step=None, total=None,
     @return: a generator that yields Category objects.
 
     """
-    if onlyInclude: # >>HERE<<
+    if fromtext:
         return pywikibot.getCategoryLinks(self.get(), self.site)
-    else:
-        return self.site.pagecategories(self, withSortKey=withSortKey,
+    return self.site.pagecategories(self, withSortKey=withSortKey,
                                     step=step, total=total, content=content)
-
 Page.categories = _categories
-
-########################################################################
-########################################################################
-########################################################################
 
 #=======================================================================
 # NEW: getLang
@@ -54,68 +48,66 @@ Page.getLang = _getLang
 # NEW: append
 #=======================================================================
 
-def _append(self, text, comment="", minorEdit=True, botflag=True,
-           async=False, nocreate=True):
-    # TODO: async support
-    self.site.login()
-    token = self.site.token(self, "edit")
-    #token = page.site.getToken("edit")
-    r = api.Request(site=self.site, action="edit", title=self.title(),
-                    appendtext=text, summary=comment, token=token)
-
-    if minorEdit:
-        r["minor"] = ""
-
-    if botflag:
-        r["bot"] = ""
-
-    if nocreate:
-        r["nocreate"] = ""
-
-    try:
-        r.submit()
-    except:
-        wp.error()
+def _append(self, *args, **kwargs):
+    if kwargs.pop('async', False):
+        pywikibot.async_request(self.site.appendpage, self, *args, **kwargs)
+    else:
+        self.site.appendpage(self, *args, **kwargs)
 
 Page.append = _append
 
+def _protect(self, *args, **kwargs):
+    self.site.protect(self, *args, **kwargs)
+
+Page.protect = _protect
+
+'''
 #=======================================================================
 # NEW: protect
 #=======================================================================
 
-def _protect(self, summary, locktype=None, expiry=None, level=None):
-    level = level or "sysop"
-    locktype = locktype or "edit"
-    try:
-        self.site.login(sysop=True)
-    except pywikibot.NoUsername, e:
-        raise NoUsername("protect: Unable to login as sysop (%s)"
-                    % e.__class__.__name__)
-    if not self.site.logged_in(sysop=True):
-        raise NoUsername("protect: Unable to login as sysop")
-    token = self.site.token(self, "protect")
-    self.site.lock_page(self)
-    req = api.Request(site=self.site, action="protect", token=token,
-                      title=self.title(withSection=False),
-                      reason=summary, protections=locktype+"="+level)
-    if expiry:
-        req["expiry"] = expiry
-    try:
-        result = req.submit()
-    except api.APIError, err:
-        errdata = {
-            'site': self.site,
-            'title': self.title(withSection=False),
-            'user': self.site.user(),
-        }
-        pywikibot.output(u"protect: error code '%s' received (%s)."
-                          % (err.code, unicode(errdata)))
-        raise
-    finally:
-        self.site.unlock_page(self)
+# TODO: support locking creation
+def _protect(self, edit='sysop', move='sysop', unprotect=False,
+             reason=None, prompt=True, expiry=None):
+    """(Un)protect a wiki page. Requires administrator status.
+
+    Valid protection levels (in MediaWiki 1.12) are '' (equivalent to
+    'none'), 'autoconfirmed', and 'sysop'.
+
+    @param edit: Level of edit protection
+    @param move: Level of move protection
+    @param unprotect: If true, unprotect the page (equivalent to setting
+        all protection levels to '')
+    @param reason: Edit summary.
+    @param prompt: If true, ask user for confirmation.
+
+    """
+    if reason is None:
+        if unprotect:
+            un = u'un'
+        else:
+            un = u''
+        pywikibot.output(u'Preparing to %sprotect %s.'
+                         % (un, self.title(asLink=True)))
+        reason = pywikibot.input(u'Please enter a reason for the action:')
+    if unprotect:
+        edit = move = ""
+    answer = 'y'
+    if prompt and not hasattr(self.site, '_noProtectPrompt'):
+        answer = pywikibot.inputChoice(
+            u'Do you want to change the protection level of %s?'
+            % self.title(asLink=True, forceInterwiki=True),
+            ['Yes', 'No', 'All'],
+            ['Y', 'N', 'A'],
+            'N')
+        if answer in ['a', 'A']:
+            answer = 'y'
+            self.site._noProtectPrompt = True
+    if answer in ['y', 'Y']:
+        return self.site.protect(self, edit, move, reason, expiry)
 
 Page.protect = _protect
-
+'''     
 '''
 #=======================================================================
 # NEW: _helper
@@ -148,7 +140,7 @@ def _helper(page, data, inPlace, noInclude=False):
 
 def _add_category(self, cats, inPlace=False):
     inPlace = inPlace or (self.namespace() in wp.conf.nstl)
-    old = set(self.categories(onlyInclude=True))
+    old = set(self.categories(fromtext=True))
     new = set(cats)
     if old + new == old:
         pywikibot.output("Add category: Nothing change!")
@@ -162,7 +154,7 @@ def _add_category(self, cats, inPlace=False):
 
 def _remove_category(self, cats, inPlace=False):
     inPlace = inPlace or (self.namespace() in wp.conf.nstl)
-    old = set(self.categories(onlyInclude=True))
+    old = set(self.categories(fromtext=True))
     new = set(cats)
     if old - new == old:
         pywikibot.output("Remove category: Nothing change!")
@@ -179,7 +171,7 @@ def _change_category2(self, oldCat, newCat, inPlace=False):
     if oldCat == newCat:
         pywikibot.output("Change category: Nothing change!")
         return False
-    old = set(self.categories(onlyInclude=True))
+    old = set(self.categories(fromtext=True))
     if oldCat not in old:
         pywikibot.output("Change category: Nothing change!")
         return False
@@ -193,7 +185,7 @@ def _change_category2(self, oldCat, newCat, inPlace=False):
 #=======================================================================
 
 def _add_category(self, cats):
-    old = set(self.categories(onlyInclude=True))
+    old = set(self.categories(fromtext=True))
     new = set(cats)
     if old | new == old:
         pywikibot.output("Add category: Nothing change!")

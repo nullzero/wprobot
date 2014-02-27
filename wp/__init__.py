@@ -182,7 +182,7 @@ def handlearg(start, arg):
         for item in arg:
             result = handlearg(start, item)
             if result is not None:
-                return result
+                return toutf(result)
         return None
     if arg == "-" + start:
         return True

@@ -12,7 +12,7 @@ from wp import lthread
 
 def glob():
     global ensite
-    ensite = pywikibot.getSite(code="en")
+    ensite = pywikibot.Site("en")
 
 def main():
     def local(page):

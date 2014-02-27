@@ -26,6 +26,45 @@ def error(e, desc=None):
 def parse(text):
     return lre.pats["trimComment"].sub("", text)
 
+def callback(page, err):
+    if isinstance(err, pywikibot.LockedPage) or isinstance(err, pywikibot.PageNotSaved):
+        if hasattr(page, 'u_nomore'):
+            page.u_err = True
+        else:
+            page.u_nomore = True
+            page.put(page.u_text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop', async=True)
+            return
+    elif err:
+        page.u_err = True
+    
+    if hasattr(page, 'u_err'):
+        pywikibot.output("<!-- Begin error -->")
+        pywikibot.output(page.text)
+        pywikibot.output("<!-- End error -->")
+        page.u_elist.append(u"ผิดพลาด: ไม่เกิดการเขียนหน้า <pre>{}</pre>".format(sys.exc_info()[0]))
+        wp.error()
+        return
+        
+    if page.u_checkcat:
+        time.sleep(30)
+        for cat in page.u_checkcat:
+            if cat.isEmptyCategory():
+                page.u_elist.append((u"[[:{}]] ว่างลงแล้ว "
+                                     u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
+                                     u"คุณอาจเขียนคู่มือการใช้งานใหม่"
+                                     u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก").format(cat.title()))
+
+    #for user in config["notifyuser"]:
+    for user in ["Nullzero"]:
+        lnotify.notify("updatePage", wp.User(user).getUserTalkPage(), {
+                    "page": page.title(),
+                    "error": "".join(map(lambda x: "* " + x + "\n", page.u_elist)),
+                    "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if # มีเดียวิกิ:Scribunto-common-error-category
+                                   page.namespace() == 828 else "",
+                    "page_config": conf.title,
+                    "revision": page.latestRevision(),
+                }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
+
 def process(page, config):
     if config.get('disable', False): return
     
@@ -38,7 +77,7 @@ def process(page, config):
                     int(config["stable"])):
         return
         
-    errorlist = []
+    page.u_elist = []
     deprecated = []
     checkcat = []
 
@@ -53,7 +92,7 @@ def process(page, config):
         elif len(item) == 4:
             num, find, replace, regex = item
         else:
-            errorlist.append(u"คำเตือน: ข้อความค้นหาและแทนที่อันดับที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
+            page.u_elist.append(u"คำเตือน: ข้อความค้นหาและแทนที่อันดับที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
             continue
         
         if regex:
@@ -61,7 +100,7 @@ def process(page, config):
         else:
             newtext = text.replace(find, replace)
         if newtext == text and find != replace:
-            errorlist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ {}".format(num))
+            page.u_elist.append(u"คำเตือน: ไม่เกิดการแทนที่ข้อความที่ {}".format(num))
         text = newtext
 
     def matchbrace(s, i):
@@ -77,7 +116,7 @@ def process(page, config):
         if len(item) == 3:
             num, param, translate = item
         else:
-            errorlist.append(u"คำเตือน: ข้อความแปลที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
+            page.u_elist.append(u"คำเตือน: ข้อความแปลที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
             continue
 
         lst = []
@@ -112,7 +151,7 @@ def process(page, config):
         elif len(item) == 4:
             num, oldParam, newParam, showError = item
         else:
-            errorlist.append(u"คำเตือน: การตรวจสอบพารามิเตอร์ล้าสมัยที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
+            page.u_elist.append(u"คำเตือน: การตรวจสอบพารามิเตอร์ล้าสมัยที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
             continue
             
         category = wp.Category("Category:" + page.title().replace(":", "") +
@@ -128,57 +167,20 @@ def process(page, config):
     text = "".join(deprecated) + text
 
     #=======
-    if (not errorlist) and (text == originalText):
+    if (not page.u_elist) and (text == originalText):
         pywikibot.output((u"ไม่มีการเปลี่ยนแปลงในหน้า {}; "
                           u"ยกเลิกการปรับปรุงและแจ้งเตือน").format(source.title()))
         return
-        
+    
     if debug:
         pywikibot.showDiff(originalText or "", text)
         return
 
     if config.get("sandbox", False):
         page = wp.Page(page.title() + "/sandbox")
-
     
-    foundError = False
-    
-    try:
-        page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", async=True)
-    except (pywikibot.LockedPage, pywikibot.PageNotSaved):
-        try:
-            page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop', async=True)
-        except:
-            foundError = True
-    except:
-        foundError = True
-
-    if foundError:
-        pywikibot.output("<!-- Begin error -->")
-        pywikibot.output(text)
-        pywikibot.output("<!-- End error -->")
-        errorlist.append(u"ผิดพลาด: ไม่เกิดการเขียนหน้า <pre>{}</pre>".format(sys.exc_info()[0]))
-        wp.error()
-
-    if checkcat:
-        time.sleep(30)
-        for cat in checkcat:
-            if cat.isEmptyCategory():
-                errorlist.append((u"[[:{}]] ว่างลงแล้ว "
-                                  u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
-                                  u"คุณอาจเขียนคู่มือการใช้งานใหม่"
-                                  u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก").format(cat.title())
-
-    #for user in config["notifyuser"]:
-    for user in ["Nullzero"]:
-        lnotify.notify("updatePage", wp.User(user).getUserTalkPage(), {
-                    "page": page.title(),
-                    "error": "".join(map(lambda x: "* " + x + "\n", errorlist)),
-                    "warn_module": u"และดู [[:หมวดหมู่:หน้าที่มีสคริปต์ผิดพลาด]] " if # มีเดียวิกิ:Scribunto-common-error-category
-                                   page.namespace() == 828 else "",
-                    "page_config": conf.title,
-                    "revision": page.latestRevision(),
-                }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
+    page.u_text = text
+    page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", async=True, callback=callback)
         
 def main():
     config = wp.ReadCode(wp.Page(conf.title), "config")
@@ -188,7 +190,8 @@ def main():
     if not updateList[0]:
         updateList = config.keys()
     for title in updateList:
-        process(wp.Page(title), config[title])
+        page = wp.Page(title)
+        process(page, config[page.title()]) # normalize page's name
 
 if __name__ == "__main__":
     args, site, conf = wp.pre(-2, lock=True)

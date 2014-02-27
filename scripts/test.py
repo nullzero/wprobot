@@ -11,11 +11,7 @@ import pywikibot
 from pywikibot.data import api
 
 def main():
-    site = pywikibot.getSite("aa")
-    print site.lang
-    print site.language()
-    print site.case()
-    print site.dbName()
+    wp.Page(u'คุยกับผู้ใช้:Nullzero/กระบะทราย').protect(u'ทดสอบ API', locktype='edit', expiry='1 day', level='sysop')
     
 if __name__ == "__main__":
     args, site, conf = wp.pre(12)

@@ -21,7 +21,7 @@ def subthread(pagep, catinp, cat, page):
     pywikibot.output("thread %s >>> adding..." % page.title())
     try:
         if page.namespace() not in wp.conf.nstl:
-            oldcat = set(page.categories(onlyInclude=True))
+            oldcat = set(page.categories(fromtext=True))
             newcat = (oldcat - set([catinp])) | set([cat])
             if oldcat != newcat:
                 pywikibot.output("Change!")
@@ -89,21 +89,21 @@ def doall(title, titlep):
     pywikibot.output("autoCategory: %s, %s" % (title, titlep))
     page = wp.Page(title)
     if not titlep:
-        pagep = page.getLang(pywikibot.getSite("en"))
+        pagep = page.getLang(pywikibot.Site("en"))
     else:
         pagep = wp.Page(titlep)
 
     sitep = pagep.site
 
     if page.exists():
-        missingcats = set(page.categories(onlyInclude=True))
+        missingcats = set(page.categories(fromtext=True))
         oldtext = page.get()
     else:
         missingcats = set()
         oldtext = ""
 
     oldcats = set(missingcats)
-    catsp = list(pagep.categories(onlyInclude=True))
+    catsp = list(pagep.categories(fromtext=True))
     cats = site.getLang(catsp)
 
     for i, catp in enumerate(catsp):
@@ -172,8 +172,7 @@ def main():
             wp.error()
 
 if __name__ == "__main__":
-    sites = [pywikibot.getSite("wikidata", "wikidata")]
-    args, site, conf = wp.pre(-3, lock=True, sites=sites)
+    args, site, conf = wp.pre(-3, lock=True)
     try:
         glob()
         wp.run(main)

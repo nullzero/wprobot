@@ -142,8 +142,7 @@ def main():
                 pass
 
 if __name__ == "__main__":
-    sites = [pywikibot.getSite("wikidata", "wikidata")]
-    args, site, conf = wp.pre(4, lock=True, sites=sites)
+    args, site, conf = wp.pre(4, lock=True)
     try:
         glob()
         wp.run(main)

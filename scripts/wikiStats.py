@@ -17,29 +17,12 @@ def glob():
     contentMain = None
     lre.pats["tspan"] = lre.lre("<.*?>")
 
-def firstContributor(title):
-    name = wp.Page(title).getVersionHistory(reverseOrder=True, total=1)[0][2]
+def firstContributor(page):
+    name = page.getVersionHistory(reverseOrder=True, total=1)[0][2]
     if wp.User(name).isAnonymous():
         return "-"
     else:
         return u"[[User:%s|%s]]" % (name, name)
-
-def pagestat(): 
-    allpages = ldata.LimitedSortedList(lambda a, b: b[0] - a[0])
-    pool = lthread.ThreadPool(20)
-    
-    def localAdd(_allpages, _page):
-        _allpages.append((len(_page.getVersionHistory()), _page.title()))
-    
-    counter = 0
-    for page in site.allpages(filterredir=False):
-        if counter % 1000 == 0:
-            pywikibot.output("(%d) processing " % counter + page.title())
-        pool.add_task(localAdd, allpages, page)
-        counter += 1
-    pool.wait_completion()
-    
-    return allpages.get()
 
 def getdat(regex):
     s = regex.find(contentMain)
@@ -104,19 +87,19 @@ def mosteditsArt():
     tablelist = []
     ptr = 0
     patListName = lre.lre(lre.sep(conf.listname))
-    allpages = pagestat()
-    while True:
-        if (len(tablelist) < 5) and patListName.search(allpages[ptr][1]):
-            tablelist.append([allpages[ptr][1], getrankold(allpages[ptr][1],
-                                                            oldtablelist), 
-                        allpages[ptr][0], firstContributor(allpages[ptr][1])])
-        elif len(table) < 10 and (not patListName.search(allpages[ptr][1])):
-            table.append([allpages[ptr][1], getrankold(allpages[ptr][1], 
-                                                        oldtable), 
-                        allpages[ptr][0], firstContributor(allpages[ptr][1])])
+    for page, revisions in site.mostrevisionspages():
+        if len(tablelist) < 5 and patListName.search(page.title()):
+            tablelist.append([page.title(),
+                              getrankold(page.title(), oldtablelist),
+                              revisions, 
+                              firstContributor(page)])
+        elif len(table) < 10 and not patListName.search(page.title()):
+            table.append([page.title(),
+                          getrankold(page.title(), oldtable),
+                          revisions,
+                          firstContributor(page)])
         elif (len(tablelist) >= 5) and (len(table) >= 10):
             break
-        ptr += 1
             
     writetable(table, regexArt)
     writetable(tablelist, regexArtlist)
@@ -157,7 +140,7 @@ def mosteditsUser():
     
 def main():
     global pageMain, contentMain
-    pageMain = pywikibot.Page(site, u"วิกิพีเดีย:ที่สุดในวิกิพีเดียภาษาไทย")
+    pageMain = wp.Page(u"วิกิพีเดีย:ที่สุดในวิกิพีเดียภาษาไทย")
     contentMain = pageMain.get()
     mosteditsArt()
     longpages()
@@ -165,7 +148,7 @@ def main():
     flush()
     
 if __name__ == "__main__":
-    args, site, conf = wp.pre(u"update top things in Wikipedia")
+    args, site, conf = wp.pre(13)
     try:
         glob()
         main()

@@ -46,6 +46,9 @@ def main():
     user = {}
     seen = set()
     start = site.getcurrenttime()
+    delta = wp.handlearg("delta", args)
+    if delta:
+        start -= ltime.td(int(delta))
     config = wp.ReadCode(wp.Page(u"ผู้ใช้:Nullzerobot/ปูมการละเมิด"), "config")
     while True:
         oldConfig = dict(config.data)
@@ -54,7 +57,7 @@ def main():
             pywikibot.output(">>> reload new config!")
         for i in config.data:
             data = config.data[i]
-            for ab in site.abuselog(reverse=True, abuseid=i, start=start):
+            for ab in site.abuselog(reverse=True, abuseid=i, start=start, as_group='sysop'):
                 if (ab["id"]) in seen:
                     continue
                 seen.add(ab["id"])
@@ -76,8 +79,8 @@ def main():
                 if len(deq) >= data["threshold"]:
                     process(userobj, data, ab)
                     deq.clear()
-                site.login(sysop=True)
-
+        if delta:
+            break
         ltime.sleep(60)
         start = max(start, site.getcurrenttime() - ltime.td(seconds=120))
 
