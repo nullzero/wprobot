@@ -47,12 +47,11 @@ def main():
         if erase:
             page.put(lre.pats["tl"].sub(u"", page.get()), conf.summary)
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(5, lock=True)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(5, lock=True, main=__name__)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()

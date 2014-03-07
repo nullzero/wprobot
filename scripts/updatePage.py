@@ -193,12 +193,11 @@ def main():
         page = wp.Page(title)
         process(page, config[page.title()]) # normalize page's name
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(-2, lock=True)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(-2, main=__name__, lock=True)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()

@@ -20,55 +20,55 @@ def consecutiveSpace(s):
 
 """ Section ========================================================="""
 
-patListSection = lre.subst()
-patListSection.append(("'{2,}", ""))
+patListSection = lre.Subst()
+patListSection.append("'{2,}", "")
 # remove all italic and bold markup
-patListSection.append(("<(?!/?(ref|sup|sub)).*?>", ""))
+patListSection.append("<(?!/?(ref|sup|sub)).*?>", "")
 # remove all html markup except refupub
 
 """ Table ==========================================================="""
 
-patListTable = lre.subst()
-patListTable.append((r"(?m)^(\|[\-\+\}]?) *", r"\1 "))
+patListTable = lre.Subst()
+patListTable.append(r"(?m)^(\|[\-\+\}]?) *", r"\1 ")
 # "$|-abc$" => "$|- abc$", "$|-$" => "$|- $"
-patListTable.append((r" *\|\| *", " || "))
+patListTable.append(r" *\|\| *", " || ")
 # "$z||a$" => "$z || a$"
-patListTable.append((" *!! *", " !! "))
+patListTable.append(" *!! *", " !! ")
 # "$z!!a$" => "$z !! a$"
-patListTable.append((r"(?m)^\|([\}\-$]) *$", r"|\1"))
+patListTable.append(r"(?m)^\|([\}\-$]) *$", r"|\1")
 # "$|- $" => "$|-$"
-patListTable.append(("(?m)^! *", "! "))
+patListTable.append("(?m)^! *", "! ")
 # "$!abc !! asd$" => "$! abc !! asd$"
 
 """ Space ==========================================================="""
-patListSpace = lre.subst()
-patListSpace.append(("(?m)(?<=^)(?! )(.*?) +", r"\1 "))
+patListSpace = lre.Subst()
+patListSpace.append("(?m)(?<=^)(?! )(.*?) +", r"\1 ")
 # "$abc    def   ghi$" => "$abc def ghi$"
 # except: that line is in source tag or that line starts with space
 
-patList = lre.subst()
-patList.append((r"[\t\r\f\v]", " "))
+patList = lre.Subst()
+patList.append(r"[\t\r\f\v]", " ")
 # change all whitespaces to space!
-patList.append((r"_(?=[^\[\]]*\]\])", " "))
+patList.append(r"_(?=[^\[\]]*\]\])", " ")
 # $[[_abc_def_]]$ => $[[ abc def ]]$
-patList.append((r"(?m)(?<!=) +$", ""))
+patList.append(r"(?m)(?<!=) +$", "")
 # strip traling space
-patList.append((r"(?m)=$", "= "))
+patList.append(r"(?m)=$", "= ")
 # strip traling space except the last character is =
-patList.append((r"(?m)^(=+) *(.*?) *(=+) *$", r"\1 \2 \3"))
+patList.append(r"(?m)^(=+) *(.*?) *(=+) *$", r"\1 \2 \3")
 # $==   oak   ==   $ => $== oak ==$
-patList.append((r"(?m)^= (.*?) =$", r"== \1 =="))
+patList.append(r"(?m)^= (.*?) =$", r"== \1 ==")
 # don't use first-level headings
-patList.append((r"(?m)^==+\ .*?\ ==+$", patListSection.process))
+patList.append(r"(?m)^==+\ .*?\ ==+$", patListSection.process)
 # call patListSection
 tablemarkup = ["rowspan", "align", "colspan", "width", "style"]
-patList.append(("(" + lre.sep(tablemarkup) + ") *= *", r"\1 = "))
+patList.append("(" + lre.sep(tablemarkup) + ") *= *", r"\1 = ")
 # clean whitespace around equal sign
-patList.append((r"\[\[ *(.*?) *\]\]", r"[[\1]]"))
+patList.append(r"\[\[ *(.*?) *\]\]", r"[[\1]]")
 # $[[   abc   def   ]]$ => $[[abc   def]]$
-patList.append((r"\[\[(:?)[Cc]ategory:", ur"[[\1หมวดหมู่:"))
+patList.append(r"\[\[(:?)[Cc]ategory:", ur"[[\1หมวดหมู่:")
 # L10n
-patList.append((ur"\[\[(:?)([Ii]mage|[Ff]ile|ภาพ):", ur"[[\1ไฟล์:"))
+patList.append(ur"\[\[(:?)([Ii]mage|[Ff]ile|ภาพ):", ur"[[\1ไฟล์:")
 # L10n
 patList.append((u"(?m)^== (แหล่ง|หนังสือ|เอกสาร|แหล่งข้อมูล)อ้างอิง ==$",
                 u"== อ้างอิง =="))
@@ -79,22 +79,22 @@ patList.append((u"(?m)^== (หัวข้ออื่นที่เกี่�
 patList.append((ur"""(?mx)^==\ (เว็บไซต์|โยง|ลิง[กค]์|Link *|(แหล่ง)?ข้อมูล)
                 (ภายนอก|อื่น)\ ==$""", u"== แหล่งข้อมูลอื่น =="))
 # แหล่งข้อมูลอื่น
-patList.append((r"(?m)^(:*)([#\*]+) *", r"\1\2 "))
+patList.append(r"(?m)^(:*)([#\*]+) *", r"\1\2 ")
 # clean whitespace after indentation and bullet
-patList.append((r"(?m)^(:+)(?![\*#]) *", r"\1 "))
+patList.append(r"(?m)^(:+)(?![\*#]) *", r"\1 ")
 # clean whitespace after indentation and bullet
-patList.append((r"(?m)^(:*)([\*#]*) \{\|", r"\1\2{|"))
+patList.append(r"(?m)^(:*)([\*#]*) \{\|", r"\1\2{|")
 # but openning tag of table must stick with front symbol
 # "$:::** {|$" => "$:::**{|$"
-patList.append((r"(?m)^\|(?![\}\+\-]) *", "| "))
+patList.append(r"(?m)^\|(?![\}\+\-]) *", "| ")
 # clean whitespace for template and table, except |+ |- |}
 # "$|asdasd$" => "$| asdasd$"
-patList.append(("(?ms)^\{\|.*^\|\}.*?$", patListTable.process))
+patList.append("(?ms)^\{\|.*^\|\}.*?$", patListTable.process)
 # call patListTable
 patList.append(("<references */ *>(?!.*<references */ *>)",
                 u"{{รายการอ้างอิง}}"))
 # L10n / if there are more than one reference tags, don't change!
-patList.append(("(?i)\{\{ *Reflist *", u"{{รายการอ้างอิง"))
+patList.append("(?i)\{\{ *Reflist *", u"{{รายการอ้างอิง")
 # L10n
 patList.append((r"(?ms)((?:</source>)?)(?:(?!</?source>).)*(?=<source>|\Z)",
                 consecutiveSpace))

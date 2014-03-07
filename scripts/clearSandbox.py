@@ -21,12 +21,11 @@ def main():
         page = pywikibot.Page(site, title)
         page.put(conf.text, conf.summary)    
         
-if __name__ == "__main__":
-    args, site, conf = wp.pre(6, lock=True)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(6, lock=True, main=__name__)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()

@@ -213,12 +213,12 @@ def main():
     appendTable(conf.pageReport, report)
     appendTable(conf.pageMinor, pending)
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(-1, lock=True, sites=sites)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(-1, lock=True, main=__name__)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()
+

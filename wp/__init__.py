@@ -15,13 +15,14 @@ import init
 import pywikibot
 from pywikibot import config
 from conf import glob as conf
-from wp import ltime, lthread
+from wp import ltime, lthread, ExitCode
 
 def glob():
     global info
     info = {}
     info["site"] = None
     info["basescript"] = os.path.basename(sys.argv[0])
+    info["main"] = None
     conf.botname = os.environ["WPROBOT_BOT"]
 
 def tostr(st):
@@ -50,12 +51,12 @@ def error(e=None):
     print traceback instead.
     """
     if e:
-        pywikibot.output("E: " + e)
+        pywikibot.error("E: " + e)
     else:
         exc = sys.exc_info()[0]
         if (exc == KeyboardInterrupt) or (exc == SystemExit):
             sys.exit()
-        pywikibot.output("E: " + toutf(traceback.format_exc()))
+        pywikibot.error("E: " + toutf(traceback.format_exc()))
 
 def getTime():
     """Print timestamp."""
@@ -64,15 +65,7 @@ def getTime():
 def simplifypath(path):
     return os.path.abspath(os.path.expanduser(os.path.join(*path)))
 
-def _login(namedict, sysop=False):
-    for familyName in namedict:
-        for lang in namedict[familyName]:
-            site = pywikibot.getSite(code=lang, fam=familyName)
-            if not (site.logged_in(sysop) and
-                    site.user() == site.username(sysop)):
-                site.login()
-
-def pre(taskid=-1, lock=None, sites=[], continuous=False):
+def pre(taskid=-1, lock=None, sites=[], continuous=False, main=None):
     """
     Return argument list, site object, and configuration of the script.
     This function also handles default arguments, generates lockfile
@@ -80,6 +73,9 @@ def pre(taskid=-1, lock=None, sites=[], continuous=False):
     """
     import imp
     global info
+    info["main"] = (main == "__main__")
+    if continuous:
+        lock = False
     pywikibot.handleArgs("-log")
     pywikibot.output("start task #%s at %s" % (taskid, getTime()))
     info["taskid"] = taskid
@@ -87,29 +83,20 @@ def pre(taskid=-1, lock=None, sites=[], continuous=False):
     info["lockfile"] = simplifypath([os.environ["WPROBOT_DIR"], "tmp",
                                      info["basescript"] + ".lock"])
     info["continuous"] = continuous
-    if os.path.exists(info["lockfile"]) and (lock != False):
+    if os.path.exists(info["lockfile"]) and lock:
         error("lockfile found. unable to execute the script.")
-        pywikibot.stopme()
-        sys.exit()
+        if info["main"]:
+            pywikibot.stopme()
+        sys.exit(ExitCode.LockFileError)
 
     open(info["lockfile"], 'w').close()
 
-    args = pywikibot.handleArgs() # must be called before getSite()
-    site = pywikibot.getSite()
+    args = pywikibot.handleArgs() # must be called before Site()
+    site = pywikibot.Site()
     info["site"] = site
-    
-    """
-    if sites == True:
-        _login(config.usernames)
-        _login(config.sysopnames, sysop=True)
-    else:
-        _login({site.family.name: {site.code: None}})
-        for isite in sites:
-            _login({isite.family.name: {isite.code: None}})
-    """
 
     confpath = simplifypath([os.environ["WPROBOT_DIR"], "conf",
-                            info["basescript"]])
+                             info["basescript"]])
 
     module = (imp.load_source("conf", confpath) if os.path.exists(confpath)
                                                 else None)
@@ -117,6 +104,8 @@ def pre(taskid=-1, lock=None, sites=[], continuous=False):
 
 def run(func):
     global info
+    if not info["main"]:
+        return
     task = ReadCode(Page(u"User:Nullzerobot/แผงควบคุม"), "task")
     task.load()
 
@@ -174,7 +163,7 @@ def posterror():
     if info["continuous"]:
         raise RuntimeError
 
-def handlearg(start, arg):
+def handlearg(start, arg=None):
     """This function determines whether the specified argument matches
     required name. If a list is sent, the function will check all 
     elements and return the first matching"""

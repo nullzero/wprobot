@@ -69,12 +69,11 @@ def main():
             excludelist.get()[:conf.allentries],
             activedata)
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(8, lock=True)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(8, lock=True, main=__name__)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()

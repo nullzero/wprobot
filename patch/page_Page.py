@@ -11,6 +11,8 @@ from wp import lre
 # add fromtext in order to find including of explicitly category
 #=======================================================================
 
+@deprecate_arg("nofollow_redirects", None)
+@deprecate_arg("get_redirect", None)
 def _categories(self, withSortKey=False, step=None, total=None,
                content=False, fromtext=False):
     """Iterate categories that the article is in.

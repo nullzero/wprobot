@@ -23,8 +23,10 @@ def main():
         text = page.get()
         for name in aliases:
             if name in text:
-                #os.system("open /Applications/Google\ Chrome.app/ http://th.wikipedia.org/wiki/{}".format(urllib.quote(page.title().encode('utf-8'))))
-                page.delete(reason=u"ไฟล์ชอบธรรมไม่มีการใช้งาน", prompt=False)
+                # os.system(("open /Applications/Google\ Chrome.app/"
+                #             " http://th.wikipedia.org/wiki/{}").format(
+                #             urllib.quote(page.title().encode('utf-8'))))
+                page.delete(reason=u"โรบอต: ไฟล์ชอบธรรมไม่มีการใช้งาน", prompt=False)
                 break
     
 if __name__ == "__main__":

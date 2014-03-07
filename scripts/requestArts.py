@@ -61,12 +61,11 @@ def main():
                               map(lambda x: u"--> " + x + u" <!--", s)))
     pagewrite.put(content, conf.summary)
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(7, lock=True)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(7, lock=True, main=__name__)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()

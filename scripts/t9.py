@@ -113,12 +113,11 @@ def main():
         except:
             wp.error()
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(1, lock=False, continuous=True)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(1, lock=False, continuous=True, main=__name__)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()

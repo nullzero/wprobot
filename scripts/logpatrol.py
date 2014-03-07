@@ -84,12 +84,11 @@ def main():
         ltime.sleep(60)
         start = max(start, site.getcurrenttime() - ltime.td(seconds=120))
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(2, lock=False, continuous=True)
-    try:
-        glob()
-        wp.run(main)
-    except:
-        wp.posterror()
-    else:
-        wp.post()
+args, site, conf = wp.pre(2, lock=False, continuous=True, main=__name__)
+try:
+    glob()
+    wp.run(main)
+except:
+    wp.posterror()
+else:
+    wp.post()

@@ -48,13 +48,12 @@ u"""{{เหตุการณ์ปัจจุบัน/วันเดือ�
     libdate.monthEng(today.month), today.year)
         page.put(content, u"เพิ่มเดือนโดยบอต")
 
-if __name__ == "__main__":
-    args, site, conf = wp.pre(13)
-    try:
-        glob()
-        main()
-    except:
-        wp.posterror()
-    else:
-        wp.post()
-        
+args, site, conf = wp.pre(13, main=__name__)
+try:
+    glob()
+    main()
+except:
+    wp.posterror()
+else:
+    wp.post()
+    

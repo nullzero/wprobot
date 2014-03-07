@@ -49,18 +49,18 @@ class lre(object):
     def pattern(self):
         return self.regex.pattern
         
-class subst(object):
+class Subst(object):
     def __init__(self):
-        self._all = []
+        self.all = []
         
-    def append(self, p):
-        self._all.append((lre(p[0]), p[1], p[2:]))
+    def append(self, *args):
+        self.all.append((lre(args[0]), args[1], args[2:]))
     
     def process(self, s):
         if not isinstance(s, basestring):
             s = s.group()
             
-        for i in self._all:
+        for i in self.all:
             if "subr" in i[2]:
                 s = i[0].subr(i[1], s)
             else:
