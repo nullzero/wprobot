@@ -330,37 +330,6 @@ def _pagelinks_by_text(self, text, title=None, expand=False):
 
 APISite.pagelinks_by_text = _pagelinks_by_text
 
-def _pageslanglinks(self, pages, step=None, total=None):
-    """Iterate all interlanguage links on page, yielding Link objects."""
-    alllltitles = [page.title(withSection=False).encode(self.encoding())
-                for page in pages]
-    counter = 0
-    arr = {}
-    for lltitles in itergroup(alllltitles, 50):
-        llquery = self._generator(api.PropertyGenerator,
-                                  type_arg="langlinks",
-                                  titles=lltitles,
-                                  step=step, total=total)
-        for pageitem in llquery:
-            if 'langlinks' not in pageitem:
-                continue
-            if pageitem["title"] in arr and "langlinks" in arr[pageitem["title"]]:
-                arr[pageitem["title"]]["langlinks"] += pageitem["langlinks"]
-            else:
-                arr[pageitem["title"]] = pageitem
-
-    for i, title in enumerate(alllltitles):
-        pagelink = []
-        if title in arr and 'langlinks' in arr[title]:
-            pageitem = arr[title]
-            for linkdata in pageitem['langlinks']:
-                pagelink.append(pywikibot.Link.langlinkUnsafe(linkdata['lang'],
-                                                              linkdata['*'],
-                                                              source=self))
-        pages[i]._langlinks = pagelink
-
-APISite.pageslanglinks = _pageslanglinks
-
 def _getLang(self, pages):
     if pages:
         pages[0].site.pageslanglinks(pages)
@@ -515,6 +484,24 @@ def _mostrevisionspages(self, step=None, total=None):
                int(pageitem['value']))
 
 APISite.mostrevisionspages = _mostrevisionspages
+
+def _loadrevid(self, revid):
+    query = api.Request(site=self,
+                        action='query',
+                        prop='revisions',
+                        rvprop='content|timestamp|user',
+                        revids=unicode(revid))
+    query = query.submit()
+    query = query['query']
+    if 'badrevids' in query:
+        raise Exception('NoID: {}'.format(revid))
+    pagedata = query['pages'].itervalues().next()['revisions'][0]
+    user = pagedata['user']
+    content = pagedata['*']
+    timestamp = pywikibot.Timestamp.fromISOformat(pagedata['timestamp'])
+    return (revid, timestamp, user, content)
+
+APISite.loadrevid = _loadrevid
 
 ########################################################################
 ########################################################################

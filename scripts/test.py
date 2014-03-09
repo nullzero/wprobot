@@ -11,8 +11,8 @@ import pywikibot
 from pywikibot.data import api
 
 def main():
-    for i in wp.Page(u'หน้าหลัก').langlinks():
-        print pywikibot.Page(i).get(get_redirect=True)
+    content = site.loadrevid(5369036)
+    print content[0]
 
 args, site, conf = wp.pre(12, main=__name__)
 try:
