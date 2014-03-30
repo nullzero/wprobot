@@ -39,7 +39,7 @@ def parse(text):
     if not (text[0] == '"' and text[-1] == '"'):
         error("not begin or end with double quote", text)
         sys.exit()
-    a = lre.pats["trimComment"].sub("", 
+    a = lre.pats["trimComment"].sub("",
             (text[1:-1].replace("\\{", "{")
                         .replace("\\}", "}")
                         .replace("\\!", "|")
@@ -53,8 +53,8 @@ def parse(text):
         #print a
         #print "--------"
         signal = True
-    return a            
-                        
+    return a
+
 allpages = {}
 
 def process(text, page_config):
@@ -95,19 +95,19 @@ def process(text, page_config):
         error("something wrong")
         return
     """
-    
+
     params["users"] = "'" + "', '".join([lre.pats["user0"].find(x.strip(), 1) for x in params["notifyuser"].split("\n")]) + "'"
-    
+
     def changeYes(k): params[k] = u"    '{}': True,\n".format(k) if (k in params and params[k] == conf.yes) else ""
     def changeString(k): params[k] = u"    '{}': u'{}',\n".format(k, params[k]) if (k in params) else ""
-    
+
     changeYes("disable")
     changeYes("sandbox")
     changeYes("stable")
     changeString("note")
     changeString("message")
-    
-    
+
+
     output1 = (
 u"""\
 ###############################
@@ -123,11 +123,11 @@ config[page] = {{
 }}
 
 """.format(**params))
-    
+
     def space(a):
         a = unicode(a)
         return " " * (len(a) + 35)
-    
+
     output = ""
     global signal
     for key in params:
@@ -146,7 +146,7 @@ config[page] = {{
         if key == "depr":
             for kk, (i, j) in enumerate(params[key]):
                 output += u"""config[page]['obsolete'].append(({}, u"{}", u"{}", u"{}"))\n""".format(i, j, params['rdepr'][kk][1], params['errordepr'][kk][1])
-    
+
         '''
         elif key == "param" or key == "translate":
             print ">>>", key
@@ -165,12 +165,12 @@ config[page] = {{
             else:
                 print ">>>", key, params[key]
         '''
-    
+
     if output: output += "\n"
     if page_config not in allpages:
         allpages[page_config] = wp.Page(page_config + '!')
         allpages[page_config].text = ""
-    
+
     output = output1 + output + "###############################\n"
     #allpages[page_config].text += output
     #print output

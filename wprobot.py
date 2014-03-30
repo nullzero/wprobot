@@ -9,7 +9,7 @@ def appendif(arr, val):
 
 def simplifypath(*path):
     return os.path.abspath(os.path.expanduser(os.path.join(*path)))
-    
+
 def init():
     if "WPROBOT_BOT" not in os.environ:
         for ind, arg in enumerate(sys.argv):
@@ -30,8 +30,9 @@ firsttime = False
 if "WPROBOT_DIR" not in os.environ:
     firsttime = True
     os.environ["WPROBOT_DIR"] = os.path.split(__file__)[0]
-    init()
-    
+
+init()
+
 appendif(sys.path, simplifypath(os.environ["WPROBOT_DIR"]))
 
 import conf.conf

@@ -8,4 +8,4 @@
  1. look for template at /doc subpage first
 + t9
  1. delete talk page too
-+ 
++

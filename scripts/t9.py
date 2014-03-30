@@ -63,11 +63,11 @@ def process(pagenow, page, user):
         return
 
     reason = lre.pats["stripcomment"].sub("", deletion.comment()).strip()
-    
+
     associatedPage = pagenow.toggleTalkPage()
     if associatedPage.exists():
         associatedPage.delete(reason=u"โรบอต: ลบหน้าพูดคุยของหน้าที่ถูกลบอัตโนมัติ", prompt=False)
-        
+
     pagenow.delete(reason=u"โรบอต: %s" %
                   (reason or u"[[WP:CSD#ท9|ท9]]: สร้างหน้าที่เคยถูกลบใหม่"),
                   prompt=False)

@@ -10,9 +10,23 @@ import wp
 import pywikibot
 from pywikibot.data import api
 
+def inspect(page):
+    print page
+    print 'title', page.title()
+    print 'namespace', page.namespace()
+    print 'site', page.site
+
 def main():
-    content = site.loadrevid(5369036)
-    print content[0]
+    inspect(wp.Page('th:abc'))
+    inspect(wp.Page(':th:abc'))
+    inspect(wp.Page('en:abc'))
+    inspect(wp.Page(':en:abc'))
+    inspect(wp.Page('s:abc'))
+    inspect(wp.Page(':s:abc'))
+    inspect(wp.Page('s:en:abc'))
+    inspect(wp.Page(':s:en:abc'))
+    inspect(wp.Page('s:th:abc'))
+    inspect(wp.Page(':s:th:abc'))
 
 args, site, conf = wp.pre(12, main=__name__)
 try:

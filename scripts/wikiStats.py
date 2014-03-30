@@ -35,7 +35,7 @@ def getdat(regex):
         if not line.startswith("|"):
             continue
         table.append([x.strip() for x in line.split("||")])
-    
+
     for i in xrange(len(table)):
         table[i][0] = lre.pats["link"].find(table[i][0])[2:-2]
     return table
@@ -51,13 +51,13 @@ def tag(x):
 def writetable(table, regex):
     global contentMain
     for i in xrange(len(table)):
-        table[i][0] = u"%s %d. [[%s]]" % (tag(i + 1 - table[i][1]), 
+        table[i][0] = u"%s %d. [[%s]]" % (tag(i + 1 - table[i][1]),
                                             i + 1, table[i][0])
         if table[i][1] == sys.maxint:
             table[i][1] = conf.newcomer
         table[i] = u" || ".join([unicode(x) for x in table[i]])
     contentMain = regex.sub(u"".join(map(lambda x: u"\n|-\n| " + x, table)) +
-                        "\n|}\n{{hatnote|" + conf.summary + u" %s}}\n" % 
+                        "\n|}\n{{hatnote|" + conf.summary + u" %s}}\n" %
                         wp.getTime(), contentMain)
 
 def flush():
@@ -91,7 +91,7 @@ def mosteditsArt():
         if len(tablelist) < 5 and patListName.search(page.title()):
             tablelist.append([page.title(),
                               getrankold(page.title(), oldtablelist),
-                              revisions, 
+                              revisions,
                               firstContributor(page)])
         elif len(table) < 10 and not patListName.search(page.title()):
             table.append([page.title(),
@@ -100,10 +100,10 @@ def mosteditsArt():
                           firstContributor(page)])
         elif (len(tablelist) >= 5) and (len(table) >= 10):
             break
-            
+
     writetable(table, regexArt)
     writetable(tablelist, regexArtlist)
-    
+
 def longpages():
     """
     long pages
@@ -115,7 +115,7 @@ def longpages():
         table.append([page.title(), getrankold(page.title(), oldlongpages),
                     length])
     writetable(table, regexLong)
-    
+
 def mosteditsUser():
     """
     most edits (user)
@@ -130,14 +130,14 @@ def mosteditsUser():
             continue
         if line.startswith(u"|"):
             line = [x.strip() for x in line[1:].split(u"||")]
-            name = lre.pats["tspan"].sub("", 
+            name = lre.pats["tspan"].sub("",
                    lre.pats["link"].find(line[1])[2:-2])
             cnt = lre.pats["link"].find(line[2], "name")[1:]
             if int(cnt) < int(limit):
                 break
             table.append([name, getrankold(name, oldusers), cnt])
     writetable(table, regexUser)
-    
+
 def main():
     global pageMain, contentMain
     pageMain = wp.Page(u"วิกิพีเดีย:ที่สุดในวิกิพีเดียภาษาไทย")
@@ -146,7 +146,7 @@ def main():
     longpages()
     mosteditsUser()
     flush()
-    
+
 args, site, conf = wp.pre(13, main=__name__)
 try:
     glob()

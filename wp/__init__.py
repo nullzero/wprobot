@@ -165,7 +165,7 @@ def posterror():
 
 def handlearg(start, arg=None):
     """This function determines whether the specified argument matches
-    required name. If a list is sent, the function will check all 
+    required name. If a list is sent, the function will check all
     elements and return the first matching"""
     if isinstance(arg, list):
         for item in arg:

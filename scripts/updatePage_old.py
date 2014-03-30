@@ -36,7 +36,7 @@ def parse(text):
     if not (text[0] == '"' and text[-1] == '"'):
         error("not begin or end with double quote", text)
         sys.exit()
-    return lre.pats["trimComment"].sub("", 
+    return lre.pats["trimComment"].sub("",
             (text[1:-1].replace("\\\\", "<!--##-->\\<!--##-->")
                         .replace("\\{", "{")
                         .replace("\\}", "}")
@@ -145,7 +145,7 @@ def process(text, page_config):
                                u" ที่ใช้พารามิเตอร์ " + sdepr)
         checkcat.append(category)
         deprecated.append(u'<includeonly>{{{{#if:{{{{{{{depr}|}}}}}}|[[{cat}]]'
-                          .format(depr=sdepr, cat=category.title()) +            
+                          .format(depr=sdepr, cat=category.title()) +
                           ((u'<span class="error">พารามิเตอร์ {depr} '
                           u'ล้าสมัยแล้ว โปรดใช้ {rdepr} แทนที่</span><br />')
                           .format(depr=sdepr, rdepr=params["rdepr"][i][1])
@@ -168,7 +168,7 @@ def process(text, page_config):
         page = wp.Page(page.title() + "/sandbox")
 
     foundError = False
-    
+
     try:
         page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต")
     except (pywikibot.LockedPage, pywikibot.PageNotSaved):
@@ -178,7 +178,7 @@ def process(text, page_config):
             foundError = True
     except:
         foundError = True
-    
+
     if foundError:
         pywikibot.output("<!-- Begin error -->")
         pywikibot.output(text)

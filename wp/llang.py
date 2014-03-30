@@ -41,13 +41,13 @@ def analyzeChar(content):
     """
     cntThaiChar = 0
     cntForeignChar = 0
-    
+
     for i in content:
         if i in Thai["All"]:
             cntThaiChar += 1
         else:
             cntForeignChar += 1
-    
+
     return cntThaiChar, cntForeignChar
 
 def cntWrongVowelHelper(x, y, line):
@@ -71,14 +71,14 @@ def cntWrongVowel(line):
     cnt += cntWringVowelHelper(Thai["VowelFront"], Thai["Paiyan"], line)
     cnt += cntWringVowelHelper(Thai["VowelFront"], Thai["Yamok"], line)
     cnt += cntWringVowelHelper(Thai["VowelFront"], Thai["Not"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["VowelBack"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["VowelBack"], Thai["VowelUp"], line)
     cnt += cntWringVowelHelper(Thai["VowelBack"], Thai["VowelDown"], line)
     cnt += cntWringVowelHelper(Thai["VowelBack"], Thai["VowelTaiku"], line)
     cnt += cntWringVowelHelper(Thai["VowelBack"], Thai["Sound"], line)
     cnt += cntWringVowelHelper(Thai["VowelBack"], Thai["Tantakad"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["VowelUm"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["VowelUm"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["VowelUm"], Thai["VowelUp"], line)
@@ -86,32 +86,32 @@ def cntWrongVowel(line):
     cnt += cntWringVowelHelper(Thai["VowelUm"], Thai["VowelTaiku"], line)
     cnt += cntWringVowelHelper(Thai["VowelUm"], Thai["Sound"], line)
     cnt += cntWringVowelHelper(Thai["VowelUm"], Thai["Tantakad"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["VowelUp"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["VowelUp"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["VowelUp"], Thai["VowelUp"], line)
     cnt += cntWringVowelHelper(Thai["VowelUp"], Thai["VowelDown"], line)
     cnt += cntWringVowelHelper(Thai["VowelUp"], Thai["VowelTaiku"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["VowelDown"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["VowelDown"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["VowelDown"], Thai["VowelUp"], line)
     cnt += cntWringVowelHelper(Thai["VowelDown"], Thai["VowelDown"], line)
     cnt += cntWringVowelHelper(Thai["VowelDown"], Thai["VowelTaiku"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["VowelTaiku"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["VowelTaiku"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["VowelTaiku"], Thai["VowelUp"], line)
     cnt += cntWringVowelHelper(Thai["VowelTaiku"], Thai["VowelDown"], line)
     cnt += cntWringVowelHelper(Thai["VowelTaiku"], Thai["VowelTaiku"], line)
     cnt += cntWringVowelHelper(Thai["VowelTaiku"], Thai["Tantakad"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["Sound"], Thai["VowelUp"], line)
     cnt += cntWringVowelHelper(Thai["Sound"], Thai["VowelDown"], line)
     cnt += cntWringVowelHelper(Thai["Sound"], Thai["VowelTaiku"], line)
     cnt += cntWringVowelHelper(Thai["Sound"], Thai["Sound"], line)
     cnt += cntWringVowelHelper(Thai["Sound"], Thai["Tantakad"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["Tantakad"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["Tantakad"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["Tantakad"], Thai["VowelUp"], line)
@@ -119,7 +119,7 @@ def cntWrongVowel(line):
     cnt += cntWringVowelHelper(Thai["Tantakad"], Thai["VowelTaiku"], line)
     cnt += cntWringVowelHelper(Thai["Tantakad"], Thai["Sound"], line)
     cnt += cntWringVowelHelper(Thai["Tantakad"], Thai["Tantakad"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["Paiyan"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["Paiyan"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["Paiyan"], Thai["VowelUp"], line)
@@ -129,7 +129,7 @@ def cntWrongVowel(line):
     cnt += cntWringVowelHelper(Thai["Paiyan"], Thai["Tantakad"], line)
     cnt += cntWringVowelHelper(Thai["Paiyan"], Thai["Paiyan"], line)
     cnt += cntWringVowelHelper(Thai["Paiyan"], Thai["Yamok"], line)
-               
+
     cnt += cntWringVowelHelper(Thai["Yamok"], Thai["VowelFront"], line)
     cnt += cntWringVowelHelper(Thai["Yamok"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["Yamok"], Thai["VowelUm"], line)
@@ -138,8 +138,8 @@ def cntWrongVowel(line):
     cnt += cntWringVowelHelper(Thai["Yamok"], Thai["VowelTaiku"], line)
     cnt += cntWringVowelHelper(Thai["Yamok"], Thai["Sound"], line)
     cnt += cntWringVowelHelper(Thai["Yamok"], Thai["Tantakad"], line)
-    cnt += cntWringVowelHelper(Thai["Yamok"], Thai["Paiyan"], line)                
-               
+    cnt += cntWringVowelHelper(Thai["Yamok"], Thai["Paiyan"], line)
+
     cnt += cntWringVowelHelper(Thai["Not"], Thai["VowelBack"], line)
     cnt += cntWringVowelHelper(Thai["Not"], Thai["VowelUm"], line)
     cnt += cntWringVowelHelper(Thai["Not"], Thai["VowelUp"], line)
@@ -147,33 +147,33 @@ def cntWrongVowel(line):
     cnt += cntWringVowelHelper(Thai["Not"], Thai["VowelTaiku"], line)
     cnt += cntWringVowelHelper(Thai["Not"], Thai["Sound"], line)
     cnt += cntWringVowelHelper(Thai["Not"], Thai["Tantakad"], line)
-    
+
     return cnt
 
 checkVowel = u"แโใไะาๅำัิีึืํฺุู็่้๊๋์ฯ"
 
 def fixRepetedVowelTitle(page):
     """
-    If found impossible vowel arrangement in title, 
+    If found impossible vowel arrangement in title,
     correct by moving that page.
     """
     opagetitle = page.title()
     pagetitle = opagetitle
-    
+
     for i in checkVowel:
         pagetitle = lre.sub(i + u"+", i, pagetitle)
-    
+
     if pagetitle != opagetitle:
         pywikibot.output("ย้ายบทความชื่อมีสระซ้อน")
         reason = u"โรบอต: เปลี่ยนชื่อบทความมีสระซ้อน"
-        try: 
+        try:
             page.move(pagetitle, reason=reason)
         except:
             wp.error()
         else:
             page = pywikibot.Page(pywikibot.getSite(), page.title())
             page.delete(reason=reason, prompt=False, mark=True)
-    
+
 def fixRepetedVowel(content):
     """If found impossible vowel arrangement in text, correct it."""
     for i in checkVowel:

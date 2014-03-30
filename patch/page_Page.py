@@ -109,7 +109,7 @@ def _protect(self, edit='sysop', move='sysop', unprotect=False,
         return self.site.protect(self, edit, move, reason, expiry)
 
 Page.protect = _protect
-'''     
+'''
 '''
 #=======================================================================
 # NEW: _helper
@@ -209,5 +209,5 @@ def _parentPage(self, level=1):
         if occ == 0: break
         level -= 1
     return Page(title)
-    
+
 Page.parentPage = _parentPage

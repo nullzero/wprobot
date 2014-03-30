@@ -17,17 +17,17 @@ __author__ = "Sorawee Porncharoenwase"
 import init
 import pywikibot
 from wp import lre, lexception
-    
+
 def wiki2table(content):
     """
     Get text. Return information in table of that text:
         Header
         List of data
-    
+
     Known issues:
         What is the meaning of '||' at the beginning of line?
     """
-    
+
     content = lre.find(r"(?ms)^\{\|.*?^\|\}", content)
     if content is None:
         raise lexception.TableError
@@ -36,14 +36,14 @@ def wiki2table(content):
     content = lre.subr(r"(?m)(^\|.*?)\|\|", u"\\1\n|", content)
     header = []
     lines = content.split("\n")
-    
+
     for line in lines:
         if line.startswith("!"):
             header.append(line[1:].strip())
-    
+
     table = []
     linelist = []
-    
+
     for line in lines:
         if line.startswith("|-") or line.startswith("|}"):
             if linelist:
@@ -51,10 +51,10 @@ def wiki2table(content):
                 linelist = []
         elif line.startswith("|"):
             linelist.append(line[1:].strip())
-    
+
     for line in table:
         if len(line) != len(header):
             raise lexception.TableError
-    
+
     header = (lre.find(r"(?m)^\{\|.*?$", content), header)
     return header, table

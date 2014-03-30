@@ -144,7 +144,7 @@ def main():
                 revtimestamp = ts
             else:
                 break
-                
+
         dic["oldlen"] = {}
         dic["oldlen"]["text"] = u"รุ่นเก่า"
 

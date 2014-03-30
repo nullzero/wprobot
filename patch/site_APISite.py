@@ -385,7 +385,7 @@ def _appendpage(self, page, text, comment="", minorEdit=True, botflag=True,
     except:
         wp.error()
     else:
-        pywikibot.output(u"[[{}]] is appended".format(page.title()))
+        pywikibot.output(u"Page {} is appended".format(page.title(asLink=True)))
 
 APISite.appendpage = _appendpage
 

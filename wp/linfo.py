@@ -18,7 +18,7 @@ def getdat(page, key=None):
     key = wp.toutf(key)
     text = page.get()
     if key:
-        dat = wp.toutf(lre.find(u"(?m)^\* " + lre.escape(key) + 
+        dat = wp.toutf(lre.find(u"(?m)^\* " + lre.escape(key) +
                        u": (.*?)$", text, 1))
     else:
         lines = text.strip().split("\n")
@@ -26,7 +26,7 @@ def getdat(page, key=None):
         for line in lines:
             key, value = line.split(": ")
             dat[key] = value
-            
+
     return dat
 
 def putdat(page, key, value):
@@ -49,5 +49,5 @@ def putdat(page, key, value):
             text = text + u"\n" + addedLine
         else:
             text = addedLine
-    
+
     page.put(text, u"ปรับปรุงข้อมูล")

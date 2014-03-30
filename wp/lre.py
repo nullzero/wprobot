@@ -13,29 +13,29 @@ import pywikibot
 class lre(object):
     def __init__(self, pat):
         self.regex = re.compile(pat)
-        
+
     def search(self, text):
         return self.regex.search(text)
-        
+
     def find(self, text, group=0):
         _x = self.search(text)
         if _x:
             return _x.group(group)
         else:
             return None
-    
+
     def findall(self, text):
         return self.regex.findall(text)
-    
+
     def finditer(self, text):
         return self.regex.finditer(text)
-    
+
     def sub(self, subst, text):
         return self.regex.sub(subst, text)
-    
+
     def subn(self, subst, text):
         return self.regex.subn(subst, text)
-    
+
     def subr(self, subst, text):
         """Substitute by regex until there is no change."""
         while True:
@@ -44,22 +44,22 @@ class lre(object):
             if text == oldtext:
                 break
         return text
-    
+
     @property
     def pattern(self):
         return self.regex.pattern
-        
+
 class Subst(object):
     def __init__(self):
         self.all = []
-        
+
     def append(self, *args):
         self.all.append((lre(args[0]), args[1], args[2:]))
-    
+
     def process(self, s):
         if not isinstance(s, basestring):
             s = s.group()
-            
+
         for i in self.all:
             if "subr" in i[2]:
                 s = i[0].subr(i[1], s)
@@ -78,7 +78,7 @@ def findall(pat, text):
 
 def finditer(pat, text):
     return lre(pat).finditer(text)
-    
+
 def sub(pat, subst, text):
     return lre(pat).sub(subst, text)
 
@@ -107,7 +107,7 @@ def findOverlap(pattern, text):
     return sum([1 for x in finditer(u"(?=(" + pattern + u"))", text) if x])
 
 def rmsym(begin, end, text):
-    return subr("(?s)%s(?:(?!%s|%s).)*%s" % 
+    return subr("(?s)%s(?:(?!%s|%s).)*%s" %
             (begin, begin, end, end), "", text)
 
 """ More patterns! """

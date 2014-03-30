@@ -19,8 +19,8 @@ def main():
         pagelist = wp.conf.sandboxPages
     for title in pagelist:
         page = pywikibot.Page(site, title)
-        page.put(conf.text, conf.summary)    
-        
+        page.put(conf.text, conf.summary)
+
 args, site, conf = wp.pre(6, lock=True, main=__name__)
 try:
     glob()

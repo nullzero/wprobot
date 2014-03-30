@@ -25,17 +25,17 @@ class LimitedSortedList(object):
         self.cmpfunc = cmpfunc
         self.lazy = lazy
         self.lim = lim
-    
+
     def append(self, data):
         """Append an element to list."""
         self.data.append(data)
         self.__lazyop()
-    
+
     def concat(self, data):
         """Concatenate list with list."""
         self.data += data
         self.__lazyop()
-    
+
     def __lazyop(self):
         """Lazy operation."""
         if len(self.data) > self.lazy:

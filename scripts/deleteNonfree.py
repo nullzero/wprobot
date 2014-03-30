@@ -28,7 +28,7 @@ def main():
                 #             urllib.quote(page.title().encode('utf-8'))))
                 page.delete(reason=u"โรบอต: ไฟล์ชอบธรรมไม่มีการใช้งาน", prompt=False)
                 break
-    
+
 if __name__ == "__main__":
     args, site, conf = wp.pre(12)
     try:

@@ -6,14 +6,14 @@ import wp
 import pywikibot
 from wp import lre, ltime
 from pywikibot.data import api
-    
+
 def glob():
     pass
 
 def main():
     today = ltime.datetime.date.today()
 
-    year = today.year + 543    
+    year = today.year + 543
     month = libdate.monthThai(today.month)
     day = today.day
 
@@ -39,9 +39,9 @@ u"""{{เหตุการณ์ปัจจุบัน/วันเดือ�
 
 [[หมวดหมู่:พ.ศ. %d แบ่งตามเดือน|*%d-%d]]
 
-[[en:%s %d]]""" % (month, year, today.month, year, 
+[[en:%s %d]]""" % (month, year, today.month, year,
     libdate.weekdayThai(libdate.date(today.year, today.month, 1).weekday()),
-    libdate.weekdayThai(libdate.date(today.year, today.month, 
+    libdate.weekdayThai(libdate.date(today.year, today.month,
         libdate.getNumDay(today.year, today.month)).weekday()),
     year, month,
     year, year, today.month,
@@ -56,4 +56,3 @@ except:
     wp.posterror()
 else:
     wp.post()
-    

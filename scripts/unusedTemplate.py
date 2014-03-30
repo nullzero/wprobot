@@ -33,7 +33,7 @@ def main():
                 page.delete(reason=u"โรบอต: หน้าเปลี่ยนทางไม่จำเป็น", prompt=False)
             """
     '''
-    
+
 
 if __name__ == "__main__":
     args, site, conf = wp.pre("detect unused templates")

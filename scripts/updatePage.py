@@ -27,16 +27,17 @@ def parse(text):
     return lre.pats["trimComment"].sub("", text)
 
 def callback(page, err):
-    if isinstance(err, pywikibot.LockedPage) or isinstance(err, pywikibot.PageNotSaved):
+    if isinstance(err, pywikibot.LockedPage) or isinstance(err, pywikibot.PageNotSaved) or repr(err) == """APIError("protectednamespace-interface", "You're not allowed to edit interface messages", {})""":
         if hasattr(page, 'u_nomore'):
             page.u_err = True
         else:
             page.u_nomore = True
-            page.put(page.u_text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop', async=True)
+            page.put(page.u_text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop')
             return
     elif err:
+        print 'c'
         page.u_err = True
-    
+
     if hasattr(page, 'u_err'):
         pywikibot.output("<!-- Begin error -->")
         pywikibot.output(page.text)
@@ -44,7 +45,8 @@ def callback(page, err):
         page.u_elist.append(u"ผิดพลาด: ไม่เกิดการเขียนหน้า <pre>{}</pre>".format(sys.exc_info()[0]))
         wp.error()
         return
-        
+
+    """
     if page.u_checkcat:
         time.sleep(30)
         for cat in page.u_checkcat:
@@ -53,6 +55,7 @@ def callback(page, err):
                                      u"แสดงว่าไม่มีพารามิเตอร์ล้าสมัย "
                                      u"คุณอาจเขียนคู่มือการใช้งานใหม่"
                                      u"และลบการตั้งค่าพารามิเตอร์ล้าสมัยออก").format(cat.title()))
+    """
 
     #for user in config["notifyuser"]:
     for user in ["Nullzero"]:
@@ -67,7 +70,7 @@ def callback(page, err):
 
 def process(page, config):
     if config.get('disable', False): return
-    
+
     source = wp.Page(config["source"])
     today = site.getcurrenttime()
     originalText = page.get() if page.exists() else None
@@ -76,7 +79,7 @@ def process(page, config):
                     source.getVersionHistory(total=1)[0][1])).days <
                     int(config["stable"])):
         return
-        
+
     page.u_elist = []
     deprecated = []
     checkcat = []
@@ -94,7 +97,7 @@ def process(page, config):
         else:
             page.u_elist.append(u"คำเตือน: ข้อความค้นหาและแทนที่อันดับที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
             continue
-        
+
         if regex:
             newtext = lre.sub(find, replace, text)
         else:
@@ -143,7 +146,8 @@ def process(page, config):
         if newtext == text:
             errorlist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ {}".format(num))
         text = newtext
-    
+
+    """
     for item in config["obsolete"]:
         if len(item) == 3:
             num, oldParam, newParam = item
@@ -153,45 +157,50 @@ def process(page, config):
         else:
             page.u_elist.append(u"คำเตือน: การตรวจสอบพารามิเตอร์ล้าสมัยที่ {} มีจำนวนพารามิเตอร์ไม่ถูกต้อง".format(num))
             continue
-            
+
         category = wp.Category("Category:" + page.title().replace(":", "") +
                                u" ที่ใช้พารามิเตอร์ " + oldParam)
         checkcat.append(category)
         deprecated.append(u'<includeonly>{{{{#if:{{{{{{{}|}}}}}}|[[{}]]'
-                          .format(oldParam, category.title()) +            
+                          .format(oldParam, category.title()) +
                           ((u'<span class="error">พารามิเตอร์ {} '
                           u'ล้าสมัยแล้ว โปรดใช้ {} แทนที่</span><br />')
                           .format(oldParam, newParam)
                           if showError else u'') +
                           u'}}</includeonly>')
     text = "".join(deprecated) + text
+    """
 
     #=======
     if (not page.u_elist) and (text == originalText):
         pywikibot.output((u"ไม่มีการเปลี่ยนแปลงในหน้า {}; "
                           u"ยกเลิกการปรับปรุงและแจ้งเตือน").format(source.title()))
         return
-    
+
     if debug:
         pywikibot.showDiff(originalText or "", text)
         return
 
     if config.get("sandbox", False):
         page = wp.Page(page.title() + "/sandbox")
-    
+
     page.u_text = text
     page.put(text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", async=True, callback=callback)
-        
+
 def main():
     config = wp.ReadCode(wp.Page(conf.title), "config")
     config.load()
     config = config.data
+    for page in dict(config):
+        config[wp.Page(page)] = dict(config[page])
+        del config[page]
     updateList = [wp.handlearg("page", args)]
     if not updateList[0]:
         updateList = config.keys()
-    for title in updateList:
-        page = wp.Page(title)
-        process(page, config[page.title()]) # normalize page's name
+    for page in updateList:
+        if not isinstance(page, pywikibot.Page):
+            page = wp.Page(page)
+        process(page, config[page]) # normalize page's name
 
 args, site, conf = wp.pre(-2, main=__name__, lock=True)
 try:

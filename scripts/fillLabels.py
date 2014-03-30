@@ -38,7 +38,7 @@ def main():
                 t = pywikibot.Timestamp(year=t.year, month=t.month-1, day=28)
         else:
             t = pywikibot.Timestamp(year=t.year, month=t.month, day=t.day-1)
-            
+
         gen1 = site.recentchanges(start=t, reverse=True, showRedirects=False,
                                   showBot=False, changetype=["new", "edit"],
                                   namespaces=conf.namespaces)
@@ -57,20 +57,20 @@ def main():
     else:
         pages1 = [u"หมวดหมู่:ชาววิกิพีเดียรักองค์โสมฯ"]
         pywikibot.output("unknown argument")
-        
+
     allpages = list(set(filter(lambda x: (ord(u"ก") <= ord(x[0]) <= ord(u"๛")),
                pages1 + pages2 + pages3)))
     datasite = site.data_repository()
     cnti = 0
     pywikibot.output("processing %d pages" % len(allpages))
-    
+
     for check in conf.checklist:
         if check["detectFromTitle"] is None: check["detectFromTitle"] = "[]" # dummy string which invalid for title
         for checkClaim in check["claims"]:
             checkClaim["nameItem"] = pywikibot.ItemPage(datasite, checkClaim["nameItem"])
             if checkClaim["refItem"] is not None:
                 checkClaim["refItem"] = pywikibot.ItemPage(datasite, checkClaim["refItem"])
-    
+
     for pages in itergroup(allpages, 100):
         cnti += 1
         pywikibot.output("round %d" % cnti)
@@ -99,7 +99,7 @@ def main():
                             if claim.getTarget() == claimCheck["nameItem"]:
                                 passItem = True
                                 break
-                                
+
                     if not passItem:
                         passAllItem = False
                         if passCriteria:
@@ -115,7 +115,7 @@ def main():
                 if (description is None) and passCriteria:
                     description = check["description"]
                 if passCriteria: break
-                          
+
             oldlabels = None
             if "th" in data["labels"]:
                 oldlabels = data["labels"]["th"]

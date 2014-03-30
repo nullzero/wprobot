@@ -22,7 +22,7 @@ def process(lst):
                     continue
                 elif wp.handlearg("manual", args):
                     continue
-                
+
             if (page.botMayEdit() and
                     (site.getcurrenttime() - page.editTime()).days >= 30):
                 pywikibot.output("deleting " + page.title())
