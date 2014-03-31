@@ -53,8 +53,8 @@ def main():
     pagewrite = pywikibot.Page(site, conf.pagewrite)
     content = pagewrite.get()
     s = []
-    s += getlink(conf.wpvital, 4, reqen=True)
-    #s += getlink(conf.wpreq, 1, reqen=True)
+    s += getlink(conf.wpvital, 2, reqen=True)
+    s += getlink(conf.wpreq, 2, reqen=True)
     #s += getlink(conf.wpbio, 1, reqen=True)
     content = patoldlink.sub(dummytext + u"\n", content)
     content = content.replace(dummytext, u"\n".join(
