@@ -10,23 +10,15 @@ import wp
 import pywikibot
 from pywikibot.data import api
 
-def inspect(page):
-    print page
-    print 'title', page.title()
-    print 'namespace', page.namespace()
-    print 'site', page.site
-
 def main():
-    inspect(wp.Page('th:abc'))
-    inspect(wp.Page(':th:abc'))
-    inspect(wp.Page('en:abc'))
-    inspect(wp.Page(':en:abc'))
-    inspect(wp.Page('s:abc'))
-    inspect(wp.Page(':s:abc'))
-    inspect(wp.Page('s:en:abc'))
-    inspect(wp.Page(':s:en:abc'))
-    inspect(wp.Page('s:th:abc'))
-    inspect(wp.Page(':s:th:abc'))
+    page = wp.Page(u'ไฟล์:Dekisugi.jpg')
+    print list(page.backlinks())
+    """
+    for page in site.allpages(namespace=828):
+        print page.title()
+        if raw_input('protect [Y/n]: ') != 'n':
+            page.protect(prompt=False, reason='โรบอต: แม่แบบ/มอดูลสำคัญ')
+    """
 
 args, site, conf = wp.pre(12, main=__name__)
 try:
