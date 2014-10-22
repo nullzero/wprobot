@@ -16,8 +16,8 @@ def glob():
     lre.pats["ref"] = lre.lre(u"(?ms)^== *อ้างอิง *==.*")
 
 def cntref(text):
-    return (text.count("<ref") +
-           (lre.pats["ref"].find(text) or "").count("http://") +
+    return (text.count("<ref") + # inline citation
+           (lre.pats["ref"].find(text) or "").count("http://") + # references in references section
            (lre.pats["ref"].find(text) or "").count("https://"))
 
 def process(pagenow, page, user):
@@ -81,18 +81,16 @@ def process(pagenow, page, user):
                         "pagefrom": "" if page == pagenow
                                        else u"ของหน้า " + page.title(),
                         "admin": deletion.user(),
-                        "reason": (u' "%s"' % reason if reason
-                                                     else u"บางประการ"),
+                        "reason": (u' "{}"'.format(reason) if reason
+                                                           else u"บางประการ"),
                     }, u"แจ้งเตือนการสร้างหน้าที่เคยถูกลบ", nocreate=False,
                     botflag=False)
 
-    pywikibot.output(u"had deleted for %d times" % cntdel)
+    pywikibot.output(u"had deleted for {} times".format(cntdel))
     if cntdel >= 3:
-        page.protect(u"โรบอต: หน้าไม่ผ่านเกณฑ์ - ถูกลบหลายครั้งติดต่อกัน",
-                     locktype="create", expiry="14 days",
-                     level="sysop")
+        page.protect(edit=None, move=None, create="sysop", 
+                     reason=u"โรบอต: หน้าไม่ผ่านเกณฑ์ - ถูกลบหลายครั้งติดต่อกัน", expiry="14 days", prompt=False)
         pywikibot.output("protected")
-        site.login()
 
 def main():
     page = wp.handlearg("page", args)

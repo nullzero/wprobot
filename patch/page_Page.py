@@ -10,6 +10,7 @@ from wp import lre
 #=======================================================================
 # add fromtext in order to find including of explicitly category
 #=======================================================================
+from pywikibot.page import Page
 
 @deprecate_arg("nofollow_redirects", None)
 @deprecate_arg("get_redirect", None)
@@ -58,58 +59,6 @@ def _append(self, *args, **kwargs):
 
 Page.append = _append
 
-def _protect(self, *args, **kwargs):
-    self.site.protect(self, *args, **kwargs)
-
-Page.protect = _protect
-
-'''
-#=======================================================================
-# NEW: protect
-#=======================================================================
-
-# TODO: support locking creation
-def _protect(self, edit='sysop', move='sysop', unprotect=False,
-             reason=None, prompt=True, expiry=None):
-    """(Un)protect a wiki page. Requires administrator status.
-
-    Valid protection levels (in MediaWiki 1.12) are '' (equivalent to
-    'none'), 'autoconfirmed', and 'sysop'.
-
-    @param edit: Level of edit protection
-    @param move: Level of move protection
-    @param unprotect: If true, unprotect the page (equivalent to setting
-        all protection levels to '')
-    @param reason: Edit summary.
-    @param prompt: If true, ask user for confirmation.
-
-    """
-    if reason is None:
-        if unprotect:
-            un = u'un'
-        else:
-            un = u''
-        pywikibot.output(u'Preparing to %sprotect %s.'
-                         % (un, self.title(asLink=True)))
-        reason = pywikibot.input(u'Please enter a reason for the action:')
-    if unprotect:
-        edit = move = ""
-    answer = 'y'
-    if prompt and not hasattr(self.site, '_noProtectPrompt'):
-        answer = pywikibot.inputChoice(
-            u'Do you want to change the protection level of %s?'
-            % self.title(asLink=True, forceInterwiki=True),
-            ['Yes', 'No', 'All'],
-            ['Y', 'N', 'A'],
-            'N')
-        if answer in ['a', 'A']:
-            answer = 'y'
-            self.site._noProtectPrompt = True
-    if answer in ['y', 'Y']:
-        return self.site.protect(self, edit, move, reason, expiry)
-
-Page.protect = _protect
-'''
 '''
 #=======================================================================
 # NEW: _helper

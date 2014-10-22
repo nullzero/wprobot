@@ -1,0 +1,31 @@
+alarm
+| time (time)
+| is_suppress_before (bool)
+| is_activate (bool)
+
+
+def suppress(){
+    if(alarm.status == "active"){
+        alarm.status = "don't do anything until the next alarm"
+    }else{
+        alarm.status = "dismiss before time"
+    }
+}
+
+while(true){
+    if(alarm.time_to_wake_1min()){
+        if(alarm.status == "don't do anything until the next alarm"){
+            alarm.status = "prepare to active"
+        }
+    }
+    if(alarm.time_to_wake()){
+        if(alarm.status == "dismiss before time"){
+            alarm.status = "don't do anything until the next alarm"
+        }elif(alarm.status == "prepare to active"){
+            alarm.status = "active"
+            for(action in alarm.actions){
+                action.status = "active"
+            }
+        }
+    }
+}

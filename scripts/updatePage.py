@@ -11,6 +11,9 @@ import init
 import wp
 import pywikibot
 from wp import lre, lnotify, lthread, ltime
+from datetime import datetime
+from collections import defaultdict
+import itertools
 
 debug = False
 
@@ -35,7 +38,6 @@ def callback(page, err):
             page.put(page.u_text, u"ปรับปรุงหน้าอัตโนมัติโดยบอต", as_group='sysop')
             return
     elif err:
-        print 'c'
         page.u_err = True
 
     if hasattr(page, 'u_err'):
@@ -68,7 +70,7 @@ def callback(page, err):
                     "revision": page.latestRevision(),
                 }, u"แจ้งการปรับปรุงหน้าอัตโนมัติ")
 
-def process(page, config):
+def process(page, config, sources):
     if config.get('disable', False): return
 
     source = wp.Page(config["source"])
@@ -84,10 +86,14 @@ def process(page, config):
     deprecated = []
     checkcat = []
 
-    text = source.get()
-
-    #=======
-
+    if sources:
+        source = sources[source]
+        
+    text = source.text
+    
+    if page.namespace() == 828:
+        text = lre.sub('(?<!:)[Tt]emplate:', u'แม่แบบ:', text)
+    
     for item in config["findText"]:
         if len(item) == 3:
             num, find, replace = item
@@ -144,7 +150,7 @@ def process(page, config):
             out.append(text[i])
         newtext = "".join(out)
         if newtext == text:
-            errorlist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ {}".format(num))
+            page.u_elist.append(u"คำเตือน: ไม่เกิดการแปลพารามิเตอร์ที่ {}".format(num))
         text = newtext
 
     """
@@ -170,13 +176,18 @@ def process(page, config):
                           u'}}</includeonly>')
     text = "".join(deprecated) + text
     """
-
     #=======
+    if page.userName() not in ['^Nullzerobot', 'Nullzerobot', 'Nullzero']:
+        page.u_elist.append(u"คำเตือน: ผู้แก้ไขหน้านี้ครั้งสุดท้ายคือ " + page.userName())
+    
     if (not page.u_elist) and (text == originalText):
         pywikibot.output((u"ไม่มีการเปลี่ยนแปลงในหน้า {}; "
                           u"ยกเลิกการปรับปรุงและแจ้งเตือน").format(source.title()))
         return
-
+    
+    if page.namespace() == 828 and 'wrappers' in text:
+        page.u_elist.append(u"คำเตือน: มอดูลนี้มี wrapper")
+    
     if debug:
         pywikibot.showDiff(originalText or "", text)
         return
@@ -195,12 +206,29 @@ def main():
         config[wp.Page(page)] = dict(config[page])
         del config[page]
     updateList = [wp.handlearg("page", args)]
-    if not updateList[0]:
+    partial = False
+    if updateList[0]:
+        partial = True
+    else:
         updateList = config.keys()
-    for page in updateList:
+    for ind, page in enumerate(updateList):
         if not isinstance(page, pywikibot.Page):
-            page = wp.Page(page)
-        process(page, config[page]) # normalize page's name
+            updateList[ind] = wp.Page(page)
+    
+    updateList = list(site.preloadpages(updateList))
+    
+    sources = [wp.Page(value['source']) for value in config.values()]
+    
+    if not partial:
+        out = []
+        for psite, subgroup in itertools.groupby(sources, lambda x: x.site):
+            out += list(psite.preloadpages(subgroup))
+        sources = out
+
+    sources = {m: m for m in sources}
+
+    for page in updateList:
+        process(page, config[page], sources) # normalize page's name
 
 args, site, conf = wp.pre(-2, main=__name__, lock=True)
 try:
