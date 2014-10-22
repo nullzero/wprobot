@@ -4,6 +4,9 @@ import init
 import wp
 from pywikibot.page import *
 from pywikibot.data import api
+from pywikibot.tools import (
+    ComparableMixin, deprecated, deprecate_arg, deprecated_args
+)
 from wp import ltime
 from wp import lre
 
